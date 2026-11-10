@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PLUG Informática - Ordem de Serviço</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f1f5f9; color: #1e293b; padding-bottom: 50px; }
+    
+    /* Navbar */
+    nav { background-color: #0f172a; color: white; padding: 12px 20px; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-brand img { height: 45px; max-width: 140px; background: white; padding: 2px 6px; border-radius: 8px; object-fit: contain; display: block; }
+    .nav-brand h1 { font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
+    .nav-brand p { font-size: 11px; color: #38bdf8; font-weight: 500; }
+    .nav-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav-buttons button { background: #1e293b; color: #cbd5e1; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .nav-buttons button.active, .nav-buttons button:hover { background: #0284c7; color: white; }
+
+    /* Layout Principal */
+    main { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+    .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 20px; }
+    .card-title { font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 5px; }
+    .card-subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+
+    /* Formulários e Inputs */
+    .section-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+    .section-title { font-size: 12px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    @media(max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: 12px; font-weight: bold; color: #334155; margin-bottom: 5px; }
+    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; background: white; color: #0f172a; }
+    input:focus, select:focus, textarea:focus { border-color: #0284c7; box-shadow: 0 0 0 2px rgba(2,132,199,0.2); }
+
+    /* Alerta de Regras */
+    .alert-box { background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 10px; font-size: 12px; color: #78350f; margin-bottom: 15px; }
+    .alert-box strong { color: #451a03; }
+
+    /* Botões */
+    .btn-primary { width: 100%; background: #0284c7; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; border: none; cursor: pointer; }
+    .btn-sky { background: #0284c7; color: white; }
+    .btn-emerald { background: #059669; color: white; }
+    .btn-dark { background: #1e293b; color: white; }
+    .btn-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .btn-purple { background: #7c3aed; color: white; }
+
+    /* Modais */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+    .modal-content { background: white; width: 100%; max-width: 750px; border-radius: 16px; overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-header { background: #0f172a; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer { background: #f8fafc; padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav id="menu-navegacao">
+    <div class="nav-brand">
+      <img src="robozinho.jpg" alt="PLUG Informática" onerror="this.style.display='none';">
+      <div>
+        <h1>PLUG INFORMÁTICA</h1>
+        <p>Avenida Portugal, 20 - Centro, Mauá - SP</p>
+      </div>
+    </div>
+    <div class="nav-buttons" id="nav-botoes-container">
+      <button onclick="mostrarAba('nova-os')" id="btn-aba-nova" class="active">➕ Nova O.S.</button>
+      <button onclick="mostrarAba('lista-os')" id="btn-aba-lista">📋 Gerenciar O.S.</button>
+      <button onclick="mostrarAba('colaboradores')" id="btn-aba-colab">👥 Colaboradores & Serviços</button>
+      <button onclick="mostrarAba('comissoes')" id="btn-aba-comiss">💵 Comissões</button>
+      <button onclick="mostrarAba('financeiro')" id="btn-aba-fin">📊 Lucratividade</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ABA 1: NOVA O.S. -->
+    <div id="aba-nova-os" class="card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+        <div>
+          <h2 class="card-title">Nova Entrada de Equipamento</h2>
+          <p class="card-subtitle" id="subtitulo-form">Preencha os dados abaixo para gerar o comprovante de recepção</p>
+        </div>
+        <div style="text-align: right; font-size: 11px; color: #64748b;">
+          <p style="font-weight: bold;">📞 (11) 95820-8637</p>
+          <p>✉️ pluginformatica.net.br@gmail.com</p>
+        </div>
+      </div>
+
+      <form onsubmit="salvarNovaOS(event)">
+        
+        <div class="section-box">
+          <div class="section-title">👤 Dados do Cliente e Recepção</div>
+          <div class="grid-3">
+            <div>
+              <label>Telefone / WhatsApp * (Busca auto)</label>
+              <input type="tel" id="cli-fone" required oninput="buscarClientePorTelefone(this.value)" placeholder="(11) 99999-9999">
+            </div>
+            <div>
+              <label>Nome Completo do Cliente *</label>
+              <input type="text" id="cli-nome" required placeholder="Ex: João da Silva">
+            </div>
+            <div>
+              <label>Recebido por (Atendente) *</label>
+              <select id="cli-atendente" required>
+                <option value="">Selecione o Atendente...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title">💻 Dados do Equipamento</div>
+          <div class="grid-4">
+            <div>
+              <label>Tipo de Equipamento *</label>
+              <select id="eq-tipo" required style="font-weight: bold;">
+                <option value="Notebook">Notebook</option>
+                <option value="Desktop / PC">Desktop / PC</option>
+                <option value="Impressora">Impressora</option>
+                <option value="All in One">All in One</option>
+                <option value="Monitor">Monitor</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label>Marca *</label>
+              <input type="text" id="eq-marca" required placeholder="Ex: Dell, Epson">
+            </div>
+            <div>
+              <label>Modelo *</label>
+              <input type="text" id="eq-modelo" required placeholder="Ex: L3250 / Inspiron">
+            </div>
+            <div>
+              <label>Nº de Série / Tag</label>
+              <input type="text" id="eq-serie" placeholder="Ex: BR123456X">
+            </div>
+          </div>
+          <div style="margin-top: 10px;">
+            <label>Estado Físico / Acessórios Deixados</label>
+            <input type="text" id="eq-notas" placeholder="Ex: Riscos na tampa, acompanha cabo de força / fonte">
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title">⚠️ Sintoma e Solicitação</div>
+          <div>
+            <label>Reclamação do Cliente / Defeito Relatado *</label>
+            <textarea id="eq-reclamacao" required rows="3" placeholder="Ex: Não puxa papel, atolamento, não liga..."></textarea>
+          </div>
+        </div>
+
+        <div class="alert-box">
+          <p style="font-weight: bold; margin-bottom: 4px;">⚡ Aprovação Automática de Orçamento:</p>
+          <p>• Serviços/Peças até <strong>R$ 240,00</strong> (Computadores/Geral) | • Impressora até <strong>R$ 280,00</strong> | • Notebook até <strong>R$ 400,00</strong></p>
+          <p style="font-size: 11px; margin-top: 3px; color: #92400e;">Valores superiores serão submetidos à prévia consulta e aprovação do cliente.</p>
+        </div>
+
+        <button type="submit" class="btn-primary">💾 Dar Entrada e Gerar Ordem de Serviço</button>
+      </form>
+    </div>
+
+    <!-- ABA 2: GERENCIAR O.S. -->
+    <div id="aba-lista-os" class="card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+        <div>
+          <h2 class="card-title">Gerenciamento de Ordens de Serviço</h2>
+          <p class="card-subtitle" style="margin-bottom:0;">Acompanhe diagnósticos, orçamentos e histórico</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 600px; justify-content: flex-end;">
+          <input type="text" id="campo-busca" oninput="renderizarListaOS()" placeholder="🔍 Buscar cliente, fone, O.S., modelo ou S/N..." style="flex: 1; min-width: 220px; padding: 8px 12px; font-size: 12px;">
+          <select id="filtro-status" onchange="renderizarListaOS()" style="width: auto; padding: 8px 12px; font-size: 12px; font-weight: bold;">
+            <option value="todos">Todos os Status</option>
+            <option value="Aguardando Avaliação">🟡 Aguardando Avaliação</option>
+            <option value="Em Diagnóstico">🔍 Em Diagnóstico</option>
+            <option value="Orçamento Enviado">⏳ Orçamento Enviado</option>
+            <option value="Aprovado / Em Reparo">🛠️ Aprovado / Em Reparo</option>
+            <option value="Não Aprovado pelo Cliente">❌ Não Aprovado pelo Cliente</option>
+            <option value="Pronto para Retirada">✅ Pronto para Retirada</option>
+            <option value="Entregue / Concluído">🎉 Entregue / Concluído</option>
+            <option value="Cancelado / Sem Conserto">❌ Cancelado / Sem Conserto</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="container-lista-os" style="display: flex; flex-direction: column; gap: 15px;"></div>
+    </div>
+
+    <!-- ABA 3: COLABORADORES E VALORES DE SERVIÇOS -->
+    <div id="aba-colaboradores" class="card hidden" style="max-width: 900px; margin: auto;">
+      <h2 class="card-title">👥 Cadastro de Colaboradores e Tabela de Serviços</h2>
+      <p class="card-subtitle">Gerencie equipe, comissões e defina os valores padrão de mão de obra por equipamento</p>
+
+      <div class="grid-2" style="gap: 20px;">
+        <!-- Colaboradores -->
+        <div class="section-box" style="margin-bottom: 0;">
+          <div class="section-title">👤 Novo Colaborador</div>
+          <form onsubmit="salvarColaborador(event)" style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <label>Nome *</label>
+              <input type="text" id="colab-nome" required placeholder="Nome">
+            </div>
+            <div>
+              <label>Cargo *</label>
+              <select id="colab-cargo" required style="font-weight: bold;">
+                <option value="Técnico">Técnico</option>
+                <option value="Atendente de Balcão">Atendente de Balcão</option>
+              </select>
+            </div>
+            <div>
+              <label>Comissão (%) *</label>
+              <input type="number" step="0.1" id="colab-comissao" required placeholder="Ex: 10">
+            </div>
+            <button type="submit" class="btn-sm btn-sky" style="padding: 10px; font-weight: bold;">Salvar Colaborador</button>
+          </form>
+          <div id="lista-colaboradores" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;"></div>
+        </div>
+
+        <!-- Tabela de Serviços por Equipamento -->
+        <div class="section-box" style="margin-bottom: 0;">
+          <div class="section-title">⚙️ Tabela de Valores de Serviços</div>
+          <form onsubmit="salvarTabelaServico(event)" style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <label>Tipo de Equipamento (Digite livremente) *</label>
+              <input type="text" id="serv-tipo" required placeholder="Ex: Notebook, Impressora, etc.">
+            </div>
+            <div>
+              <label>Descrição do Serviço / Mão de Obra *</label>
+              <input type="text" id="serv-nome" required placeholder="Ex: Formatação e Backup / Limpeza">
+            </div>
+            <div>
+              <label>Valor Padrão (R$) *</label>
+              <input type="number" step="0.01" id="serv-valor" required placeholder="0.00">
+            </div>
+            <button type="submit" class="btn-sm btn-emerald" style="padding: 10px; font-weight: bold;">Cadastrar Valor de Serviço</button>
+          </form>
+          <div id="lista-tabela-servicos" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 4: COMISSÕES -->
+    <div id="aba-comissoes" class="card hidden" style="max-width: 900px; margin: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 class="card-title" id="titulo-comissao-pagina">💵 Relatório e Acerto de Comissões</h2>
+          <p class="card-subtitle" style="margin-bottom:0;">Cálculo inteligente baseado no tipo de peça e serviço realizado</p>
+        </div>
+        <div id="filtro-colab-wrapper">
+          <select id="filtro-colab-comissao" onchange="renderizarRelatorioComissoes()" style="padding: 8px 12px; font-size: 12px; font-weight: bold;">
+            <option value="todos">Todos os Colaboradores</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="container-relatorio-comissoes" style="display: flex; flex-direction: column; gap: 15px;"></div>
+    </div>
+
+    <!-- ABA 5: RELATÓRIO FINANCEIRO E LUCRATIVIDADE -->
+    <div id="aba-financeiro" class="card hidden" style="max-width: 950px; margin: auto;">
+      <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+        <h2 class="card-title">📊 Relatório de Lucratividade (Bruto, Taxas & Líquido)</h2>
+        <p class="card-subtitle" style="margin-bottom:0;">Análise financeira detalhada de faturamento, desconto Pix, taxas de cartão e custos</p>
+      </div>
+
+      <!-- FILTRO DE DATAS -->
+      <div class="section-box">
+        <div class="section-title">📅 Filtrar por Período de Conclusão da O.S.</div>
+        <div class="grid-3" style="align-items: flex-end;">
+          <div>
+            <label>Data Inicial</label>
+            <input type="date" id="fin-data-inicio" onchange="renderizarRelatorioFinanceiro()">
+          </div>
+          <div>
+            <label>Data Final</label>
+            <input type="date" id="fin-data-fim" onchange="renderizarRelatorioFinanceiro()">
+          </div>
+          <div>
+            <button type="button" onclick="limparFiltroDatas()" class="btn-sm btn-dark" style="padding: 10px; width: 100%;">🔄 Ver Todo o Histórico</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARDS DE RESUMO FINANCEIRO -->
+      <div class="grid-4" style="margin-bottom: 20px;">
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 12px; text-align: center;">
+          <p style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Faturamento Bruto</p>
+          <p id="fin-resumo-bruto" style="font-size: 18px; font-weight: 900; color: #0284c7; margin-top: 4px;">R$ 0,00</p>
+          <span style="font-size: 9px; color: #94a3b8;">Soma Tabela / Peças</span>
+        </div>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 12px; text-align: center;">
+          <p style="font-size: 10px; font-weight: bold; color: #991b1b; text-transform: uppercase;">Descontos / Taxas Cartão</p>
+          <p id="fin-resumo-taxas" style="font-size: 18px; font-weight: 900; color: #dc2626; margin-top: 4px;">R$ 0,00</p>
+          <span style="font-size: 9px; color: #b91c1c;">Desc. Pix + Taxa Maquininha</span>
+        </div>
+        <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 12px; border-radius: 12px; text-align: center;">
+          <p style="font-size: 10px; font-weight: bold; color: #78350f; text-transform: uppercase;">Custos & Comissões</p>
+          <p id="fin-resumo-custos" style="font-size: 18px; font-weight: 900; color: #d97706; margin-top: 4px;">R$ 0,00</p>
+          <span style="font-size: 9px; color: #92400e;">Custo Peças + Comissões</span>
+        </div>
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 12px; text-align: center;">
+          <p style="font-size: 10px; font-weight: bold; color: #065f46; text-transform: uppercase;">Lucro Líquido Real</p>
+          <p id="fin-resumo-liquido" style="font-size: 20px; font-weight: 900; color: #059669; margin-top: 4px;">R$ 0,00</p>
+          <span style="font-size: 9px; color: #047857;">Sobra Efetiva no Caixa</span>
+        </div>
+      </div>
+
+      <!-- DETALHAMENTO -->
+      <div class="section-box">
+        <div class="section-title">📋 Detalhamento das O.S. Concluídas no Período</div>
+        <div id="container-tabela-financeira" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE DIAGNÓSTICO -->
+  <div id="modal-diagnostico" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 15px; font-weight: bold;">🔧 Atualizar Avaliação / Orçamento</h3>
+        <button onclick="fecharModalDiagnostico()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+        <input type="hidden" id="diag-os-id">
+
+        <div class="grid-2">
+          <div>
+            <label>Status Atual</label>
+            <select id="diag-status" style="font-weight: bold;">
+              <option value="Aguardando Avaliação">🟡 Aguardando Avaliação</option>
+              <option value="Em Diagnóstico">🔍 Em Diagnóstico</option>
+              <option value="Orçamento Enviado">⏳ Orçamento Enviado</option>
+              <option value="Aprovado / Em Reparo">🛠️ Aprovado / Em Reparo</option>
+              <option value="Não Aprovado pelo Cliente">❌ Não Aprovado pelo Cliente</option>
+              <option value="Pronto para Retirada">✅ Pronto para Retirada</option>
+              <option value="Entregue / Concluído">🎉 Entregue / Concluído</option>
+              <option value="Cancelado / Sem Conserto">❌ Cancelado / Sem Conserto</option>
+            </select>
+          </div>
+          <div>
+            <label>Técnico Responsável</label>
+            <select id="diag-tecnico-nome" style="font-weight: bold;">
+              <option value="">Selecione o Técnico...</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Diagnóstico Técnico</label>
+          <textarea id="diag-tecnico" rows="2" placeholder="Ex: Tracionador de papel desgastado..."></textarea>
+        </div>
+
+        <div>
+          <label>Solução Proposta / Efetuada</label>
+          <textarea id="diag-solucao" rows="2" placeholder="Ex: Substituição de peças..."></textarea>
+        </div>
+
+        <!-- FORMA DE PAGAMENTO E TAXAS DE CARTÃO -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 10px;">
+          <label style="color: #166534; font-size: 12px; font-weight: bold;">💳 Forma de Pagamento / Regra de Taxa e Desconto</label>
+          <select id="diag-forma-pagamento" style="font-weight: bold; margin-top: 5px; color: #0f172a;">
+            <option value="pix_dinheiro">💚 Pix / Dinheiro (5% de Desconto para o Cliente | 0% Taxa)</option>
+            <option value="debito">💳 Cartão de Débito (Taxa de 1,40% para a Loja)</option>
+            <option value="credito_avista">💳 Crédito à Vista (Taxa de 3,42% para a Loja)</option>
+            <option value="credito_2x">💳 Crédito em 2x sem juros (Taxa de 7,19% para a Loja)</option>
+            <option value="outros">💵 Outro (Sem Desconto | Sem Taxa)</option>
+          </select>
+        </div>
+
+        <!-- CARIMBO DE ALERTA DE GARANTIA (CABEÇA DE IMPRESSÃO) -->
+        <div style="background: #fef2f2; border: 2px dashed #ef4444; padding: 12px; border-radius: 10px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #b91c1c; font-weight: 900; font-size: 13px;">
+            <input type="checkbox" id="diag-carimbo-cabeca" style="width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer;">
+            🚨 APLICAR CARIMBO: ATENÇÃO LIMPEZA E DESENTUPIMENTO DE CABEÇA SEM GARANTIA
+          </label>
+          <p style="font-size: 10px; color: #7f1d1d; margin-top: 4px; margin-left: 26px;">
+            Marca esta opção caso o serviço envolva limpeza/desentupimento de cabeça de impressão ou troca sem tintas originais.
+          </p>
+        </div>
+
+        <!-- SELEÇÃO RÁPIDA DE SERVIÇOS CADASTRADOS -->
+        <div style="background: #f1f5f9; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;">
+          <label style="color: #0f172a; margin-bottom: 5px;">⚡ Inserir Serviço Cadastrado (Tabela Padrão)</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="select-servico-catalogo" style="flex: 1; font-size: 12px;">
+              <option value="">Selecione um serviço da tabela...</option>
+            </select>
+            <button type="button" onclick="aplicarServicoCatalogo()" class="btn-sm btn-sky" style="padding: 8px 14px;">Inserir na O.S.</button>
+          </div>
+        </div>
+
+        <div>
+          <label>Mão de Obra / Serviço (R$) <span style="font-size: 10px; color: #64748b; font-weight: normal;">(Editável manualmente)</span></label>
+          <input type="number" step="0.01" id="diag-vservico" placeholder="0.00">
+        </div>
+
+        <!-- CONTROLE DETALHADO DE PEÇAS -->
+        <div class="section-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="margin: 0; color: #0369a1;">📦 Peças Utilizadas (Custos e Controle)</label>
+            <button type="button" onclick="adicionarLinhaPeca()" class="btn-sm btn-sky">+ Adicionar Peça</button>
+          </div>
+          <div id="container-pecas-modal" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 10px;">
+          <label style="color: #1e40af; display: flex; align-items: center; gap: 5px;">📌 Instruções / Avisos para a Retirada do Cliente</label>
+          <textarea id="diag-instrucoes-retirada" rows="2" placeholder="Ex: Trazer cabo de energia original, testar equipamento no balcão..." style="background: white; margin-top: 5px;"></textarea>
+        </div>
+
+        <div>
+          <label>Notas Internas do Serviço</label>
+          <input type="text" id="diag-notas-serv" placeholder="Ex: Cliente ciente...">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="fecharModalDiagnostico()" class="btn-sm" style="background: #e2e8f0; color: #334155; padding: 8px 16px;">Cancelar</button>
+        <button onclick="salvarDiagnosticoOS()" class="btn-sm btn-sky" style="padding: 8px 16px;">Salvar Atualizações</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let listaOS = JSON.parse(localStorage.getItem('pluginformatica_os_db')) || [];
+    let listaColaboradores = JSON.parse(localStorage.getItem('pluginformatica_colab_db')) || [];
+    let tabelaServicos = JSON.parse(localStorage.getItem('pluginformatica_serv_db')) || [];
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tecnicoLogado = urlParams.get('tecnico');
+
+    function salvarDadosLocal() {
+      localStorage.setItem('pluginformatica_os_db', JSON.stringify(listaOS));
+      localStorage.setItem('pluginformatica_colab_db', JSON.stringify(listaColaboradores));
+      localStorage.setItem('pluginformatica_serv_db', JSON.stringify(tabelaServicos));
+    }
+
+    window.onload = function() {
+      atualizarSelectsColaboradores();
+
+      if (tecnicoLogado) {
+        document.getElementById('menu-navegacao').style.display = 'none';
+        document.getElementById('titulo-comissao-pagina').innerText = `💵 Minhas Comissões - ${tecnicoLogado}`;
+        document.getElementById('filtro-colab-wrapper').style.display = 'none';
+        mostrarAba('comissoes');
+      }
+    };
+
+    function atualizarSelectsColaboradores() {
+      const selectAtendente = document.getElementById('cli-atendente');
+      const selectTecnicoModal = document.getElementById('diag-tecnico-nome');
+      const filtroComissao = document.getElementById('filtro-colab-comissao');
+
+      const atendentes = listaColaboradores.filter(c => c.cargo === 'Atendente de Balcão');
+      const tecnicos = listaColaboradores.filter(c => c.cargo === 'Técnico');
+
+      if (selectAtendente) {
+        selectAtendente.innerHTML = '<option value="">Selecione o Atendente...</option>' + 
+          atendentes.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
+      }
+
+      if (selectTecnicoModal) {
+        selectTecnicoModal.innerHTML = '<option value="">Selecione o Técnico...</option>' + 
+          tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+      }
+
+      if (filtroComissao) {
+        filtroComissao.innerHTML = '<option value="todos">Todos os Colaboradores</option>' + 
+          listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+      }
+    }
+
+    function mostrarAba(aba) {
+      if (tecnicoLogado && aba !== 'comissoes') return;
+
+      const abasIds = ['aba-nova-os', 'aba-lista-os', 'aba-colaboradores', 'aba-comissoes', 'aba-financeiro'];
+      abasIds.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      let abaAlvo = document.getElementById(`aba-${aba}`);
+      if (abaAlvo) abaAlvo.classList.remove('hidden');
+
+      const botoes = {
+        'nova-os': 'btn-aba-nova',
+        'lista-os': 'btn-aba-lista',
+        'colaboradores': 'btn-aba-colab',
+        'comissoes': 'btn-aba-comiss',
+        'financeiro': 'btn-aba-fin'
+      };
+
+      Object.keys(botoes).forEach(k => {
+        let btn = document.getElementById(botoes[k]);
+        if (btn) btn.classList.remove('active');
+      });
+
+      let btnAtivo = document.getElementById(botoes[aba]);
+      if (btnAtivo) btnAtivo.classList.add('active');
+
+      if (aba === 'lista-os') {
+        renderizarListaOS();
+      } else if (aba === 'colaboradores') {
+        renderizarListaColaboradores();
+        renderizarTabelaServicos();
+      } else if (aba === 'comissoes') {
+        renderizarRelatorioComissoes();
+      } else if (aba === 'financeiro') {
+        renderizarRelatorioFinanceiro();
+      }
+    }
+
+    // CADASTRO DE COLABORADORES
+    function salvarColaborador(e) {
+      e.preventDefault();
+      const novo = {
+        id: "COLAB-" + Date.now(),
+        nome: document.getElementById('colab-nome').value.trim(),
+        cargo: document.getElementById('colab-cargo').value,
+        comissao: parseFloat(document.getElementById('colab-comissao').value) || 0
+      };
+      listaColaboradores.push(novo);
+      salvarDadosLocal();
+      atualizarSelectsColaboradores();
+      e.target.reset();
+      renderizarListaColaboradores();
+      alert("✅ Colaborador cadastrado com sucesso!");
+    }
+
+    function renderizarListaColaboradores() {
+      const container = document.getElementById('lista-colaboradores');
+      if (!container) return;
+      if (listaColaboradores.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 10px; color: #94a3b8; font-size: 11px;">Nenhum colaborador.</div>`;
+        return;
+      }
+      container.innerHTML = listaColaboradores.map(c => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
+          <div>
+            <strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%)
+            ${c.cargo === 'Técnico' ? `<br><span style="color: #0284c7; font-size: 10px;">Link de acesso: <a href="?tecnico=${encodeURIComponent(c.nome)}" target="_blank">?tecnico=${c.nome}</a></span>` : ''}
+          </div>
+          <button onclick="excluirColaborador('${c.id}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function excluirColaborador(id) {
+      listaColaboradores = listaColaboradores.filter(c => c.id !== id);
+      salvarDadosLocal();
+      atualizarSelectsColaboradores();
+      renderizarListaColaboradores();
+    }
+
+    // TABELA DE VALORES DE SERVIÇOS
+    function salvarTabelaServico(e) {
+      e.preventDefault();
+      let novoServ = {
+        id: "SERV-" + Date.now(),
+        tipo: document.getElementById('serv-tipo').value.trim(),
+        nome: document.getElementById('serv-nome').value.trim(),
+        valor: parseFloat(document.getElementById('serv-valor').value) || 0
+      };
+      tabelaServicos.push(novoServ);
+      salvarDadosLocal();
+      e.target.reset();
+      renderizarTabelaServicos();
+      alert("✅ Serviço cadastrado na tabela padrão!");
+    }
+
+    function renderizarTabelaServicos() {
+      let container = document.getElementById('lista-tabela-servicos');
+      if (!container) return;
+      if (tabelaServicos.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 10px; color: #94a3b8; font-size: 11px;">Nenhum serviço cadastrado.</div>`;
+        return;
+      }
+      container.innerHTML = tabelaServicos.map(s => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
+          <div><strong>[${s.tipo}]</strong> ${s.nome} - <span style="color: #059669; font-weight: bold;">R$ ${s.valor.toFixed(2)}</span></div>
+          <button onclick="excluirTabelaServico('${s.id}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function excluirTabelaServico(id) {
+      tabelaServicos = tabelaServicos.filter(s => s.id !== id);
+      salvarDadosLocal();
+      renderizarTabelaServicos();
+    }
+
+    function aplicarServicoCatalogo() {
+      let select = document.getElementById('select-servico-catalogo');
+      let servId = select.value;
+      if (!servId) return alert("Selecione um serviço da lista.");
+      let serv = tabelaServicos.find(s => s.id === servId);
+      if (serv) {
+        document.getElementById('diag-vservico').value = serv.valor.toFixed(2);
+        let solAtual = document.getElementById('diag-solucao').value;
+        document.getElementById('diag-solucao').value = solAtual ? solAtual + " + " + serv.nome : serv.nome;
+      }
+    }
+
+    // CÁLCULO DE COMISSÃO POR O.S.
+    function calcularComissaoOS(os, colab) {
+      let vServ = parseFloat(os.valorServico) || 0;
+      let pecas = os.pecas || [];
+      let ganho = 0;
+
+      if (colab.cargo === 'Atendente de Balcão') {
+        if (os.atendente === colab.nome) {
+          ganho = (vServ * colab.comissao) / 100;
+        }
+      } else if (colab.cargo === 'Técnico') {
+        if (os.tecnico === colab.nome) {
+          let comissaoPct = colab.comissao / 100;
+          let lucroPecasCompradas = 0;
+          let valorPecasTecnicoOpcaoA = 0;
+          let valorPecasTecnicoOpcaoB = 0;
+
+          pecas.forEach(p => {
+            let vVenda = parseFloat(p.venda) || 0;
+            let vCusto = parseFloat(p.custo) || 0;
+            let origem = p.origem || 'Em Estoque';
+            let regraTec = p.regraTecnico || 'opcaoA';
+
+            if (origem === 'Comprada / Encomenda') {
+              lucroPecasCompradas += (vVenda - vCusto);
+            } else if (origem === 'Peça fornecida pelo técnico') {
+              if (regraTec === 'opcaoB') {
+                valorPecasTecnicoOpcaoB += vVenda;
+              } else {
+                valorPecasTecnicoOpcaoA += vVenda;
+              }
+            }
+          });
+
+          if (valorPecasTecnicoOpcaoB > 0) {
+            ganho = (valorPecasTecnicoOpcaoB + vServ) / 2;
+          } else {
+            let baseComissao = lucroPecasCompradas + vServ;
+            ganho = (baseComissao * comissaoPct) + valorPecasTecnicoOpcaoA;
+          }
+        }
+      }
+      return ganho;
+    }
+
+    // CÁLCULO DE TAXAS E DESCONTOS DA O.S.
+    function calcularTaxasEValoresOS(os) {
+      let vServ = parseFloat(os.valorServico) || 0;
+      let pecas = os.pecas || [];
+      let subtotalPecasVenda = 0;
+      let subtotalPecasCusto = 0;
+
+      pecas.forEach(p => {
+        if (p.origem !== 'O cliente trouxe a peça') {
+          subtotalPecasVenda += parseFloat(p.venda) || 0;
+          subtotalPecasCusto += parseFloat(p.custo) || 0;
+        }
+      });
+
+      let valorBrutoInicial = subtotalPecasVenda + vServ;
+      let descontoPix = 0;
+      let taxaCartaoMoeda = 0;
+      let valorFinalCliente = valorBrutoInicial;
+      let formaPag = os.formaPagamento || 'pix_dinheiro';
+
+      if (formaPag === 'pix_dinheiro') {
+        descontoPix = valorBrutoInicial * 0.05; // 5% de desconto
+        valorFinalCliente = valorBrutoInicial - descontoPix;
+      } else if (formaPag === 'debito') {
+        taxaCartaoMoeda = valorBrutoInicial * 0.014; // 1,40% de taxa no débito
+      } else if (formaPag === 'credito_avista') {
+        taxaCartaoMoeda = valorBrutoInicial * 0.0342; // 3,42% de taxa
+      } else if (formaPag === 'credito_2x') {
+        taxaCartaoMoeda = valorBrutoInicial * 0.0719; // 7,19% de taxa
+      }
+
+      return {
+        valorBrutoInicial,
+        descontoPix,
+        taxaCartaoMoeda,
+        valorFinalCliente,
+        subtotalPecasCusto
+      };
+    }
+
+    // RELATÓRIO DE COMISSÕES
+    function renderizarRelatorioComissoes() {
+      const container = document.getElementById('container-relatorio-comissoes');
+      if (!container) return;
+      let osConcluidas = listaOS.filter(os => os.status === 'Entregue / Concluído');
+
+      if (osConcluidas.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhuma O.S. concluída para cálculo de comissão.</div>`;
+        return;
+      }
+
+      let alvos = [];
+      if (tecnicoLogado) {
+        alvos = listaColaboradores.filter(c => c.nome === tecnicoLogado);
+      } else {
+        let filtroColab = document.getElementById('filtro-colab-comissao').value;
+        alvos = filtroColab === 'todos' ? listaColaboradores : listaColaboradores.filter(c => c.nome === filtroColab);
+      }
+
+      if (alvos.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhum colaborador encontrado para exibição.</div>`;
+        return;
+      }
+
+      let html = '';
+
+      alvos.forEach(colab => {
+        let minhasOS = osConcluidas.filter(os => os.atendente === colab.nome || os.tecnico === colab.nome);
+        let totalGanhoColab = 0;
+
+        let detalhes = minhasOS.map(os => {
+          let vServ = parseFloat(os.valorServico) || 0;
+          let pecas = os.pecas || [];
+          let ganhoOS = calcularComissaoOS(os, colab);
+          let explicacaoCalc = [];
+
+          if (colab.cargo === 'Atendente de Balcão') {
+            explicacaoCalc.push(`Atendente (${colab.comissao}% do serviço R$ ${vServ.toFixed(2)})`);
+          } else {
+            let lucroPecasCompradas = 0;
+            let valorPecasTecnicoOpcaoA = 0;
+            let valorPecasTecnicoOpcaoB = 0;
+            pecas.forEach(p => {
+              let vVenda = parseFloat(p.venda) || 0;
+              let vCusto = parseFloat(p.custo) || 0;
+              let origem = p.origem || 'Em Estoque';
+              let regraTec = p.regraTecnico || 'opcaoA';
+              if (origem === 'Comprada / Encomenda') lucroPecasCompradas += (vVenda - vCusto);
+              else if (origem === 'Peça fornecida pelo técnico') {
+                if (regraTec === 'opcaoB') valorPecasTecnicoOpcaoB += vVenda;
+                else valorPecasTecnicoOpcaoA += vVenda;
+              }
+            });
+            if (valorPecasTecnicoOpcaoB > 0) explicacaoCalc.push(`Repasse 50/50 (Peça R$ ${valorPecasTecnicoOpcaoB.toFixed(2)} + Serviço R$ ${vServ.toFixed(2)})`);
+            else {
+              if (lucroPecasCompradas > 0) explicacaoCalc.push(`Lucro Peças: R$ ${lucroPecasCompradas.toFixed(2)}`);
+              explicacaoCalc.push(`Serviço: R$ ${vServ.toFixed(2)} (${colab.comissao}%)`);
+              if (valorPecasTecnicoOpcaoA > 0) explicacaoCalc.push(`Peça Técnico (100%): R$ ${valorPecasTecnicoOpcaoA.toFixed(2)}`);
+            }
+          }
+
+          totalGanhoColab += ganhoOS;
+          let statusPg = os.comissaoPaga ? '✅ Pago' : '⏳ Pendente';
+          let botaoStatusHtml = tecnicoLogado ? `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : `<button onclick="alternarStatusComissao('${os.id}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
+
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 5px;">
+              <div>
+                <strong>${os.id}</strong> - ${os.cliente.nome} 
+                <span style="color: #64748b; font-size: 10px; margin-left: 5px;">[${explicacaoCalc.join(' | ')}]</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: bold; color: #059669;">A Receber: R$ ${ganhoOS.toFixed(2)}</span>
+                ${botaoStatusHtml}
+              </div>
+            </div>
+          `;
+        }).join('') || '<p style="font-size: 11px; color: #94a3b8; font-style: italic;">Nenhum serviço registrado.</p>';
+
+        html += `
+          <div class="section-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+              <strong>${colab.nome} <span style="color: #0284c7; font-size: 11px;">(${colab.cargo} - ${colab.comissao}%)</span></strong>
+              <span style="font-size: 14px; font-weight: 900; color: #059669;">Total: R$ ${totalGanhoColab.toFixed(2)}</span>
+            </div>
+            ${detalhes}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // RELATÓRIO FINANCEIRO E LUCRATIVIDADE POR DATA
+    function renderizarRelatorioFinanceiro() {
+      let dataInicio = document.getElementById('fin-data-inicio')?.value;
+      let dataFim = document.getElementById('fin-data-fim')?.value;
+      let containerTabela = document.getElementById('container-tabela-financeira');
+      if (!containerTabela) return;
+
+      let osConcluidas = listaOS.filter(os => os.status === 'Entregue / Concluído');
+
+      if (dataInicio || dataFim) {
+        osConcluidas = osConcluidas.filter(os => {
+          let dataOS = os.dataEntrada.split('T')[0];
+          if (dataInicio && dataOS < dataInicio) return false;
+          if (dataFim && dataOS > dataFim) return false;
+          return true;
+        });
+      }
+
+      if (osConcluidas.length === 0) {
+        containerTabela.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">Nenhuma O.S. concluída encontrada no período selecionado.</div>`;
+        document.getElementById('fin-resumo-bruto').innerText = 'R$ 0,00';
+        document.getElementById('fin-resumo-taxas').innerText = 'R$ 0,00';
+        document.getElementById('fin-resumo-custos').innerText = 'R$ 0,00';
+        document.getElementById('fin-resumo-liquido').innerText = 'R$ 0,00';
+        return;
+      }
+
+      let totalBrutoGeral = 0;
+      let totalDescontosETaxasGeral = 0;
+      let totalCustoPecasGeral = 0;
+      let totalComissoesGeral = 0;
+      let totalLucroLiquidoGeral = 0;
+
+      let htmlTabela = osConcluidas.map(os => {
+        let dt = new Date(os.dataEntrada).toLocaleDateString('pt-BR');
+        let calc = calcularTaxasEValoresOS(os);
+
+        let comissaoOS = 0;
+        listaColaboradores.forEach(colab => {
+          comissaoOS += calcularComissaoOS(os, colab);
+        });
+
+        let descontoOuTaxa = calc.descontoPix + calc.taxaCartaoMoeda;
+        let lucroLiquidoOS = calc.valorFinalCliente - calc.subtotalPecasCusto - comissaoOS - calc.taxaCartaoMoeda;
+
+        totalBrutoGeral += calc.valorBrutoInicial;
+        totalDescontosETaxasGeral += descontoOuTaxa;
+        totalCustoPecasGeral += calc.subtotalPecasCusto;
+        totalComissoesGeral += comissaoOS;
+        totalLucroLiquidoGeral += lucroLiquidoOS;
+
+        let rotuloPagamento = {
+          'pix_dinheiro': '💚 Pix/Dinheiro (-5%)',
+          'debito': '💳 Débito (1,40%)',
+          'credito_avista': '💳 Crédito à Vista (3,42%)',
+          'credito_2x': '💳 Crédito 2x (7,19%)',
+          'outros': '💵 Outros'
+        }[os.formaPagamento || 'pix_dinheiro'];
+
+        return `
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <strong>${os.id}</strong> (${dt}) - Cliente: <strong>${os.cliente.nome}</strong>
+              <div style="color: #64748b; margin-top: 2px;">Pagamento: <strong>${rotuloPagamento}</strong> | Técnico: ${os.tecnico || 'N/A'}</div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; text-align: right;">
+              <div>
+                <span style="color: #64748b; font-size: 10px; display: block;">Cobrado</span>
+                <strong style="color: #0284c7;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
+              </div>
+              <div>
+                <span style="color: #64748b; font-size: 10px; display: block;">Desc / Taxa</span>
+                <span style="color: #dc2626;">R$ ${descontoOuTaxa.toFixed(2)}</span>
+              </div>
+              <div>
+                <span style="color: #64748b; font-size: 10px; display: block;">Custo Peças</span>
+                <span style="color: #d97706;">R$ ${calc.subtotalPecasCusto.toFixed(2)}</span>
+              </div>
+              <div>
+                <span style="color: #64748b; font-size: 10px; display: block;">Comissões</span>
+                <span style="color: #b91c1c;">R$ ${comissaoOS.toFixed(2)}</span>
+              </div>
+              <div>
+                <span style="color: #64748b; font-size: 10px; display: block;">Lucro Líquido</span>
+                <strong style="color: #059669; font-size: 13px;">R$ ${lucroLiquidoOS.toFixed(2)}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      let totalCustosEComissoes = totalCustoPecasGeral + totalComissoesGeral;
+
+      document.getElementById('fin-resumo-bruto').innerText = `R$ ${totalBrutoGeral.toFixed(2)}`;
+      document.getElementById('fin-resumo-taxas').innerText = `R$ ${totalDescontosETaxasGeral.toFixed(2)}`;
+      document.getElementById('fin-resumo-custos').innerText = `R$ ${totalCustosEComissoes.toFixed(2)}`;
+      document.getElementById('fin-resumo-liquido').innerText = `R$ ${totalLucroLiquidoGeral.toFixed(2)}`;
+      containerTabela.innerHTML = htmlTabela;
+    }
+
+    function limparFiltroDatas() {
+      document.getElementById('fin-data-inicio').value = '';
+      document.getElementById('fin-data-fim').value = '';
+      renderizarRelatorioFinanceiro();
+    }
+
+    function alternarStatusComissao(osId) {
+      if (tecnicoLogado) return;
+      let os = listaOS.find(o => o.id === osId);
+      if (os) {
+        os.comissaoPaga = !os.comissaoPaga;
+        salvarDadosLocal();
+        renderizarRelatorioComissoes();
+      }
+    }
+
+    function buscarClientePorTelefone(val) {
+      let fone = val.replace(/\D/g, '');
+      if (fone.length < 4) return;
+      let enc = listaOS.find(o => o.cliente.telefone.replace(/\D/g, '').includes(fone));
+      if (enc) document.getElementById('cli-nome').value = enc.cliente.nome;
+    }
+
+    function clonarOS(idOriginal) {
+      let osAntiga = listaOS.find(o => o.id === idOriginal);
+      if (!osAntiga) return;
+
+      document.getElementById('cli-fone').value = osAntiga.cliente.telefone || '';
+      document.getElementById('cli-nome').value = osAntiga.cliente.nome || '';
+      document.getElementById('eq-tipo').value = osAntiga.equipamento.tipo || 'Notebook';
+      document.getElementById('eq-marca').value = osAntiga.equipamento.marca || '';
+      document.getElementById('eq-modelo').value = osAntiga.equipamento.modelo || '';
+      document.getElementById('eq-serie').value = osAntiga.equipamento.serie || '';
+      document.getElementById('eq-notas').value = osAntiga.equipamento.notas || '';
+      document.getElementById('eq-reclamacao').value = '';
+
+      mostrarAba('nova-os');
+      document.getElementById('subtitulo-form').innerHTML = `🔄 <strong style="color: #7c3aed;">Clonado da O.S. ${osAntiga.id}</strong> (Preencha o novo defeito e salve)`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function salvarNovaOS(e) {
+      e.preventDefault();
+      let nova = {
+        id: "OS-" + Math.floor(100000 + Math.random() * 900000),
+        dataEntrada: new Date().toISOString(),
+        atendente: document.getElementById('cli-atendente').value,
+        cliente: {
+          nome: document.getElementById('cli-nome').value.trim(),
+          telefone: document.getElementById('cli-fone').value.trim()
+        },
+        equipamento: {
+          tipo: document.getElementById('eq-tipo').value,
+          marca: document.getElementById('eq-marca').value.trim(),
+          modelo: document.getElementById('eq-modelo').value.trim(),
+          serie: document.getElementById('eq-serie').value.trim() || 'N/A',
+          notas: document.getElementById('eq-notas').value.trim() || 'Sem observações.'
+        },
+        reclamacao: document.getElementById('eq-reclamacao').value.trim(),
+        status: "Aguardando Avaliação",
+        tecnico: "",
+        diagnostico: "",
+        solucao: "",
+        instrucoesRetirada: "",
+        carimboCabeca: false,
+        formaPagamento: "pix_dinheiro",
+        pecas: [],
+        valorServico: 0,
+        notasServico: "",
+        comissaoPaga: false
+      };
+      listaOS.unshift(nova);
+      salvarDadosLocal();
+      
+      document.getElementById('subtitulo-form').innerHTML = 'Preencha os dados abaixo para gerar o comprovante de recepção';
+
+      alert(`✅ Ordem de Serviço ${nova.id} gerada com sucesso!`);
+      e.target.reset();
+      gerarComprovanteImpressao(nova);
+      mostrarAba('lista-os');
+    }
+
+    function renderizarListaOS() {
+      let container = document.getElementById('container-lista-os');
+      if (!container) return;
+      let statusFiltro = document.getElementById('filtro-status').value;
+      let busca = (document.getElementById('campo-busca')?.value || '').toLowerCase().trim();
+
+      let filtradas = listaOS;
+      if (statusFiltro !== 'todos') filtradas = filtradas.filter(o => o.status === statusFiltro);
+      if (busca) {
+        filtradas = filtradas.filter(o => 
+          o.id.toLowerCase().includes(busca) ||
+          o.cliente.nome.toLowerCase().includes(busca) ||
+          o.cliente.telefone.includes(busca) ||
+          o.equipamento.marca.toLowerCase().includes(busca) ||
+          o.equipamento.modelo.toLowerCase().includes(busca) ||
+          o.equipamento.serie.toLowerCase().includes(busca)
+        );
+      }
+
+      if (filtradas.length === 0) {
+        container.innerHTML = `<div style="background: white; padding: 30px; text-align: center; color: #64748b; border-radius: 12px; border: 1px solid #e2e8f0;">Nenhuma Ordem de Serviço encontrada.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtradas.map(os => {
+        let dt = new Date(os.dataEntrada).toLocaleString('pt-BR');
+        let pecas = os.pecas || [];
+        let calc = calcularTaxasEValoresOS(os);
+
+        let pecasHtml = pecas.length > 0 ? pecas.map(p => {
+          let descPreco = p.origem === 'O cliente trouxe a peça' ? '<span style="color: #b45309; font-weight: bold;">(Garantia por conta do cliente)</span>' : `(Venda: R$ ${parseFloat(p.venda || 0).toFixed(2)})`;
+          return `
+            <div style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+              <span><strong>${p.nome}</strong> ${descPreco}</span>
+              <span style="font-size: 10px; background: #bae6fd; padding: 1px 5px; border-radius: 4px; font-weight: bold;">${p.origem || 'Estoque'} ${p.previsao ? '• Chegada: ' + p.previsao : ''}</span>
+            </div>
+          `;
+        }).join('') : '<span style="color: #94a3b8;">Nenhuma peça.</span>';
+
+        let carimboHtml = os.carimboCabeca ? `
+          <div style="background: #fef2f2; border: 1px solid #ef4444; color: #b91c1c; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; margin-top: 8px; text-transform: uppercase; text-align: center;">
+            🚨 ATENÇÃO: LIMPEZA E DESENTUPIMENTO DE CABEÇA NÃO TEM GARANTIA POIS A QUALIDADE DA IMPRESSÃO DEPENDE DA TINTA UTILIZADA E DA VIDA ÚTIL DA CABEÇA - CABEÇA DE IMPRESSÃO NOVA SÓ TEM GARANTIA COM A UTILIZAÇÃO DE TINTAS ORIGINAIS
+          </div>
+        ` : '';
+
+        return `
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 900; color: #0284c7; font-size: 15px;">${os.id}</span>
+                  <span style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: bold;">${os.status}</span>
+                </div>
+                <h3 style="font-size: 13px; font-weight: bold; margin-top: 4px;">Cliente: ${os.cliente.nome} (${os.cliente.telefone})</h3>
+                <p style="font-size: 11px; color: #64748b; margin-top: 2px;">Entrada: ${dt} | Atendente: <strong>${os.atendente || 'N/A'}</strong> | Técnico: <strong>${os.tecnico || 'N/A'}</strong></p>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 10px; color: #94a3b8; font-weight: bold;">TOTAL COBRADO</p>
+                <p style="font-size: 16px; font-weight: 900; color: #059669;">R$ ${calc.valorFinalCliente.toFixed(2)}</p>
+                ${calc.descontoPix > 0 ? `<p style="font-size: 10px; color: #166534;">(Com 5% Desc. Pix)</p>` : ''}
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+              <div>
+                <p style="font-weight: bold; color: #334155;">💻 Equipamento:</p>
+                <p style="color: #475569;">${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} (S/N: ${os.equipamento.serie})</p>
+                <p style="font-weight: bold; color: #334155; margin-top: 6px;">🔍 Defeito:</p>
+                <p style="color: #475569;">${os.reclamacao}</p>
+              </div>
+              <div>
+                <p style="font-weight: bold; color: #334155;">📦 Peças do Orçamento:</p>
+                <div style="margin-top: 2px;">${pecasHtml}</div>
+                <p style="font-weight: bold; color: #334155; margin-top: 6px;">💡 Solução / Serviço (R$ ${parseFloat(os.valorServico || 0).toFixed(2)}):</p>
+                <p style="color: #475569;">${os.solucao || os.diagnostico || 'Pendente.'}</p>
+                ${os.instrucoesRetirada ? `<p style="font-weight: bold; color: #1e40af; margin-top: 6px;">📌 Instruções Retirada:</p><p style="color: #1e40af;">${os.instrucoesRetirada}</p>` : ''}
+              </div>
+            </div>
+
+            ${carimboHtml}
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+              <div style="display: flex; gap: 6px;">
+                <button onclick="abrirModalDiagnostico('${os.id}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
+                <button onclick="clonarOS('${os.id}')" class="btn-sm btn-purple">📋 Clonar O.S.</button>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button onclick="enviarWhatsAppOS('${os.id}')" class="btn-sm btn-emerald">📲 WhatsApp</button>
+                <button onclick='gerarComprovanteImpressao(${JSON.stringify(os)})' class="btn-sm btn-dark">🖨️ PDF</button>
+                <button onclick="excluirOS('${os.id}')" class="btn-sm btn-red">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function abrirModalDiagnostico(id) {
+      let os = listaOS.find(o => o.id === id);
+      if (!os) return;
+      document.getElementById('diag-os-id').value = os.id;
+      document.getElementById('diag-status').value = os.status;
+      
+      let selTec = document.getElementById('diag-tecnico-nome');
+      let tecnicos = listaColaboradores.filter(c => c.cargo === 'Técnico');
+      selTec.innerHTML = '<option value="">Selecione o Técnico...</option>' + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+      selTec.value = os.tecnico || '';
+
+      document.getElementById('diag-tecnico').value = os.diagnostico || '';
+      document.getElementById('diag-solucao').value = os.solucao || '';
+      document.getElementById('diag-instrucoes-retirada').value = os.instrucoesRetirada || '';
+      document.getElementById('diag-vservico').value = os.valorServico || 0;
+      document.getElementById('diag-notas-serv').value = os.notasServico || '';
+      document.getElementById('diag-carimbo-cabeca').checked = os.carimboCabeca || false;
+      document.getElementById('diag-forma-pagamento').value = os.formaPagamento || 'pix_dinheiro';
+
+      let selCat = document.getElementById('select-servico-catalogo');
+      let servFiltrados = tabelaServicos.filter(s => s.tipo.toLowerCase() === os.equipamento.tipo.toLowerCase());
+      if (servFiltrados.length === 0) servFiltrados = tabelaServicos;
+
+      selCat.innerHTML = '<option value="">Selecione um serviço da tabela padrão...</option>' + 
+        servFiltrados.map(s => `<option value="${s.id}">[${s.tipo}] ${s.nome} - R$ ${s.valor.toFixed(2)}</option>`).join('');
+
+      let cPecas = document.getElementById('container-pecas-modal');
+      cPecas.innerHTML = '';
+      let pecas = os.pecas && os.pecas.length > 0 ? os.pecas : [];
+      if (pecas.length === 0) adicionarLinhaPeca();
+      else pecas.forEach(p => adicionarLinhaPeca(p.nome, p.custo, p.venda, p.origem, p.previsao, p.regraTecnico));
+
+      document.getElementById('modal-diagnostico').style.display = 'flex';
+    }
+
+    function adicionarLinhaPeca(nome = '', custo = '', venda = '', origem = 'Em Estoque', previsao = '', regraTecnico = 'opcaoA') {
+      let c = document.getElementById('container-pecas-modal');
+      let div = document.createElement('div');
+      div.className = "linha-peca";
+      div.style.cssText = "background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;";
+      
+      let isCliente = origem === 'O cliente trouxe a peça';
+      let isTecnico = origem === 'Peça fornecida pelo técnico';
+      let displayPrecos = isCliente ? 'display: none;' : 'display: flex;';
+
+      div.innerHTML = `
+        <div style="display: flex; gap: 6px;" class="bloco-inputs-peca">
+          <input type="text" placeholder="Nome da peça" value="${nome}" class="input-peca-nome" style="flex: 2; padding: 6px; font-size: 11px;">
+          <div class="bloco-valores" style="flex: 2; display: flex; gap: 6px; ${displayPrecos}">
+            <input type="number" step="0.01" placeholder="Custo R$" value="${custo}" class="input-peca-custo" style="width: 100%; padding: 6px; font-size: 11px;">
+            <input type="number" step="0.01" placeholder="Venda R$" value="${venda}" class="input-peca-venda" style="width: 100%; padding: 6px; font-size: 11px;">
+          </div>
+          <button type="button" onclick="this.closest('.linha-peca').remove()" class="btn-sm btn-red" style="padding: 2px 8px;">✕</button>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <select class="input-peca-origem" onchange="alterarOrigemPeca(this)" style="flex: 1; padding: 4px; font-size: 11px;">
+            <option value="Em Estoque" ${origem === 'Em Estoque' ? 'selected' : ''}>📦 Em Estoque</option>
+            <option value="Comprada / Encomenda" ${origem === 'Comprada / Encomenda' ? 'selected' : ''}>🛒 Comprada / Encomenda</option>
+            <option value="Peça fornecida pelo técnico" ${isTecnico ? 'selected' : ''}>🛠️ Peça fornecida pelo técnico</option>
+            <option value="O cliente trouxe a peça" ${isCliente ? 'selected' : ''}>👤 O cliente trouxe a peça</option>
+          </select>
+          
+          <input type="text" placeholder="Previsão (Ex: 15/11)" value="${previsao}" class="input-peca-previsao" style="flex: 1; padding: 4px; font-size: 11px; ${isCliente ? 'display:none;' : ''}">
+          
+          <select class="input-peca-regra-tec" style="flex: 1; padding: 4px; font-size: 11px; background: #fef3c7; border-color: #fde68a; ${isTecnico ? 'display:block;' : 'display:none;'}">
+            <option value="opcaoA" ${regraTecnico === 'opcaoA' ? 'selected' : ''}>💵 100% Peça p/ Técnico + % Serviço</option>
+            <option value="opcaoB" ${regraTecnico === 'opcaoB' ? 'selected' : ''}>🤝 50% (Peça + Serviço) p/ Cada</option>
+          </select>
+
+          ${isCliente ? '<span class="aviso-garantia" style="font-size: 10px; color: #b45309; font-weight: bold; flex: 1;">⚠️ Garantia por conta do cliente</span>' : ''}
+        </div>
+      `;
+      c.appendChild(div);
+    }
+
+    function alterarOrigemPeca(selectEl) {
+      let linha = selectEl.closest('.linha-peca');
+      let blocoValores = linha.querySelector('.bloco-valores');
+      let inputPrevisao = linha.querySelector('.input-peca-previsao');
+      let selectRegraTec = linha.querySelector('.input-peca-regra-tec');
+      let selectContainer = selectEl.parentElement;
+
+      let avisoAntigo = selectContainer.querySelector('.aviso-garantia');
+      if (avisoAntigo) avisoAntigo.remove();
+
+      if (selectEl.value === 'O cliente trouxe a peça') {
+        blocoValores.style.display = 'none';
+        inputPrevisao.style.display = 'none';
+        selectRegraTec.style.display = 'none';
+        inputPrevisao.value = '';
+        
+        let span = document.createElement('span');
+        span.className = "aviso-garantia";
+        span.style.cssText = "font-size: 10px; color: #b45309; font-weight: bold; flex: 1;";
+        span.innerText = "⚠️ Garantia por conta do cliente";
+        selectContainer.appendChild(span);
+      } else if (selectEl.value === 'Peça fornecida pelo técnico') {
+        blocoValores.style.display = 'flex';
+        inputPrevisao.style.display = 'block';
+        selectRegraTec.style.display = 'block';
+      } else {
+        blocoValores.style.display = 'flex';
+        inputPrevisao.style.display = 'block';
+        selectRegraTec.style.display = 'none';
+      }
+    }
+
+    function fecharModalDiagnostico() {
+      document.getElementById('modal-diagnostico').style.display = 'none';
+    }
+
+    function salvarDiagnosticoOS() {
+      let id = document.getElementById('diag-os-id').value;
+      let idx = listaOS.findIndex(o => o.id === id);
+      if (idx !== -1) {
+        let linhas = document.querySelectorAll('.linha-peca');
+        let novasPecas = [];
+        linhas.forEach(l => {
+          let nome = l.querySelector('.input-peca-nome').value.trim();
+          let origem = l.querySelector('.input-peca-origem').value;
+          let regraTecnico = l.querySelector('.input-peca-regra-tec').value;
+          let custo = 0;
+          let venda = 0;
+          let previsao = '';
+
+          if (origem !== 'O cliente trouxe a peça') {
+            custo = parseFloat(l.querySelector('.input-peca-custo').value) || 0;
+            venda = parseFloat(l.querySelector('.input-peca-venda').value) || 0;
+            previsao = l.querySelector('.input-peca-previsao').value.trim();
+          }
+
+          if (nome || venda > 0 || origem === 'O cliente trouxe a peça') {
+            novasPecas.push({ nome: nome || 'Peça', custo: custo, venda: venda, origem: origem, previsao: previsao, regraTecnico: regraTecnico });
+          }
+        });
+
+        listaOS[idx].status = document.getElementById('diag-status').value;
+        listaOS[idx].tecnico = document.getElementById('diag-tecnico-nome').value;
+        listaOS[idx].diagnostico = document.getElementById('diag-tecnico').value.trim();
+        listaOS[idx].solucao = document.getElementById('diag-solucao').value.trim();
+        listaOS[idx].instrucoesRetirada = document.getElementById('diag-instrucoes-retirada').value.trim();
+        listaOS[idx].carimboCabeca = document.getElementById('diag-carimbo-cabeca').checked;
+        listaOS[idx].formaPagamento = document.getElementById('diag-forma-pagamento').value;
+        listaOS[idx].pecas = novasPecas;
+        listaOS[idx].valorServico = parseFloat(document.getElementById('diag-vservico').value) || 0;
+        listaOS[idx].notasServico = document.getElementById('diag-notas-serv').value.trim();
+
+        salvarDadosLocal();
+        fecharModalDiagnostico();
+        renderizarListaOS();
+        alert("✅ Ordem de Serviço atualizada com sucesso!");
+      }
+    }
+
+    function excluirOS(id) {
+      if (confirm(`Deseja realmente remover a ${id}?`)) {
+        listaOS = listaOS.filter(o => o.id !== id);
+        salvarDadosLocal();
+        renderizarListaOS();
+      }
+    }
+
+    function enviarWhatsAppOS(id) {
+      let os = listaOS.find(o => o.id === id);
+      if (!os) return;
+      let fone = os.cliente.telefone.replace(/\D/g, '');
+      let pecas = os.pecas || [];
+      let calc = calcularTaxasEValoresOS(os);
+
+      let msg = `⚙️ *PLUG INFORMÁTICA - O.S. (${os.id})*\n-----------------------------------\n`;
+      msg += `👤 *Cliente:* ${os.cliente.nome}\n`;
+      msg += `💻 *Equipamento:* ${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}\n`;
+      msg += `📌 *Status:* ${os.status}\n`;
+      if (os.tecnico) msg += `🔧 *Técnico:* ${os.tecnico}\n`;
+      if (os.diagnostico) msg += `🔍 *Diagnóstico:* ${os.diagnostico}\n`;
+      if (os.solucao) msg += `💡 *Serviço / Solução:* ${os.solucao}\n`;
+      if (os.instrucoesRetirada) msg += `📌 *Instruções para Retirada:* ${os.instrucoesRetirada}\n`;
+      
+      if (os.carimboCabeca) {
+        msg += `\n🚨 *ATENÇÃO:* Limpeza e desentupimento de cabeça não tem garantia pois a qualidade da impressão depende da tinta utilizada e da vida útil da cabeça - Cabeça de impressão nova só tem garantia com a utilização de tintas originais.\n`;
+      }
+
+      if (pecas.length > 0 || calc.valorBrutoInicial > 0) {
+        msg += `\n📦 *Orçamento Detalhado:*\n`;
+        pecas.forEach(p => {
+          if (p.origem === 'O cliente trouxe a peça') {
+            msg += `• ${p.nome} - [O cliente trouxe a peça | Garantia por conta do cliente]\n`;
+          } else {
+            msg += `• ${p.nome} (R$ ${parseFloat(p.venda).toFixed(2)}) - [${p.origem}${p.previsao ? ' | Chegada: ' + p.previsao : ''}]\n`;
+          }
+        });
+        msg += `• Mão de Obra / Serviço: R$ ${parseFloat(os.valorServico || 0).toFixed(2)}\n`;
+        if (calc.descontoPix > 0) {
+          msg += `💵 *Valor Padrão:* R$ ${calc.valorBrutoInicial.toFixed(2)}\n`;
+          msg += `💚 *Valor em Pix / Dinheiro (5% Desconto):* R$ ${calc.valorFinalCliente.toFixed(2)}\n`;
+        } else {
+          msg += `💰 *Valor Total:* R$ ${calc.valorFinalCliente.toFixed(2)}\n`;
+        }
+      }
+      msg += `-----------------------------------\nAvenida Portugal, 20 - Centro, Mauá - SP\n📞 (11) 95820-8637`;
+      window.open(`https://api.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function gerarComprovanteImpressao(os) {
+      let win = window.open('', '_blank');
+      if (!win) return alert("Permita pop-ups no navegador para imprimir.");
+      let dt = new Date(os.dataEntrada).toLocaleString('pt-BR');
+      let pecas = os.pecas || [];
+      let calc = calcularTaxasEValoresOS(os);
+
+      let pecasHtml = pecas.map(p => {
+        if (p.origem === 'O cliente trouxe a peça') {
+          return `
+            <div style="padding: 4px 0; border-bottom: 1px dotted #ccc; font-size: 11px;">
+              <div><strong>${p.nome}</strong> - <span style="color: #b45309; font-weight: bold;">O cliente trouxe a peça</span></div>
+              <div style="font-size: 9px; color: #78350f;">⚠️ Observação: A garantia da peça é por conta do cliente.</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div style="display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; font-size: 11px;">
+              <span><strong>${p.nome}</strong> <span style="font-size: 9px; color: #555;">(${p.origem}${p.previsao ? ' - Previsão: ' + p.previsao : ''})</span></span>
+              <span>R$ ${parseFloat(p.venda || 0).toFixed(2)}</span>
+            </div>
+          `;
+        }
+      }).join('');
+
+      let carimboPdfHtml = os.carimboCabeca ? `
+        <div style="border: 3px dashed #ef4444; background: #fef2f2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-weight: 900; font-size: 11px; line-height: 1.4; text-transform: uppercase;">
+          🚨 ATENÇÃO: LIMPEZA E DESENTUPIMENTO DE CABEÇA NÃO TEM GARANTIA POIS A QUALIDADE DA IMPRESSÃO DEPENDE DA TINTA UTILIZADA E DA VIDA ÚTIL DA CABEÇA - CABEÇA DE IMPRESSÃO NOVA SÓ TEM GARANTIA COM A UTILIZAÇÃO DE TINTAS ORIGINAIS
+        </div>
+      ` : '';
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Ordem de Serviço ${os.id}</title>
+          <style>
+            body { font-family: sans-serif; padding: 15px; color: #000; max-width: 800px; margin: auto; font-size: 12px; line-height: 1.3; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+            .box { border: 1px solid #999; padding: 10px; border-radius: 6px; margin-bottom: 10px; background: #fafafa; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+            .terms { font-size: 9px; color: #444; border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-top: 10px; }
+            .terms ul { margin: 0; padding-left: 12px; }
+            .footer-sign { margin-top: 30px; display: flex; justify-content: space-between; font-size: 10px; }
+            .line { border-top: 1px solid #000; width: 45%; text-align: center; padding-top: 4px; font-weight: bold; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="no-print" style="text-align: center; margin-bottom: 15px;">
+            <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Imprimir / Salvar PDF</button>
+          </div>
+
+          <div class="header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="robozinho.jpg" alt="Logo" style="height: 45px; max-width: 130px; object-fit: contain;" onerror="this.style.display='none';">
+              <div>
+                <h2 style="margin:0; font-size: 16px; color: #0284c7;">PLUG INFORMÁTICA</h2>
+                <p style="margin:2px 0 0 0; font-size: 9px;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 16px; font-weight: bold;">${os.id}</div>
+              <div style="font-size: 9px;">pluginformatica.net.br@gmail.com</div>
+            </div>
+          </div>
+
+          ${carimboPdfHtml}
+
+          <div class="box">
+            <div class="grid">
+              <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
+              <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
+              <div><strong>Data Entrada:</strong> ${dt}</div>
+              <div><strong>Status:</strong> ${os.status}</div>
+              <div><strong>Atendente:</strong> ${os.atendente || 'N/A'}</div>
+              <div><strong>Técnico:</strong> ${os.tecnico || 'N/A'}</div>
+            </div>
+          </div>
+
+          <div class="box">
+            <strong>Equipamento:</strong> ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} <br>
+            <strong>Nº de Série:</strong> ${os.equipamento.serie} | <strong>Acessórios/Obs:</strong> ${os.equipamento.notas}
+          </div>
+
+          <div class="box">
+            <strong>Defeito Relatado:</strong> ${os.reclamacao}
+          </div>
+
+          ${(os.diagnostico || pecas.length > 0 || calc.valorBrutoInicial > 0 || os.instrucoesRetirada) ? `
+          <div class="box">
+            <strong>Diagnóstico:</strong> ${os.diagnostico || 'N/A'} <br>
+            <strong>Serviço / Solução:</strong> ${os.solucao || 'N/A'}
+            ${os.instrucoesRetirada ? `<br><strong style="color: #1e40af;">Instruções para Retirada:</strong> <span style="color: #1e40af; font-weight: bold;">${os.instrucoesRetirada}</span>` : ''}
+            <div style="margin-top: 6px;"><strong>Peças Utilizadas:</strong></div>
+            ${pecas.length > 0 ? pecasHtml : '<div style="font-size: 10px; color: #666;">Nenhuma peça vinculada.</div>'}
+            <div style="margin-top: 6px; border-top: 1px dashed #999; padding-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span>Subtotal Peças: R$ ${calc.subtotalPecasCusto.toFixed(2)} | Mão de Obra: R$ ${parseFloat(os.valorServico || 0).toFixed(2)}</span>
+              <div style="text-align: right;">
+                ${calc.descontoPix > 0 ? `<div style="font-size: 10px; color: #166534;">Desconto Pix (5%): - R$ ${calc.descontoPix.toFixed(2)}</div>` : ''}
+                <strong style="color: #059669; font-size: 13px;">Total Final: R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="terms">
+            <strong>Termos e Condições:</strong>
+            <ul>
+              <li>Aprovação automática até R$ 240,00 (Geral), R$ 280,00 (Impressoras) e R$ 400,00 (Notebooks).</li>
+              <li>Orçamento em até 5 dias úteis. Devolução de reprovados em até 7 dias úteis.</li>
+              <li>Backup e arquivos são de responsabilidade exclusiva do cliente.</li>
+              <li>Garantia de 90 dias (não cobre mau uso, vírus, raios, oscilações ou tintas compatíveis).</li>
+              <li>Orçamento válido por 30 dias.</li>
+            </ul>
+          </div>
+
+          <div class="footer-sign">
+            <div class="line">PLUG Informática</div>
+            <div class="line">Assinatura do Técnico / Empresa</div>
+          </div>
+        </body>
+        </html>
+      `);
+      win.document.close();
+    }
+  </script>
+</body>
+</html>
