@@ -14,9 +14,13 @@
     .nav-brand img { height: 45px; max-width: 140px; background: white; padding: 2px 6px; border-radius: 8px; object-fit: contain; display: block; }
     .nav-brand h1 { font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
     .nav-brand p { font-size: 11px; color: #38bdf8; font-weight: 500; }
-    .nav-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav-buttons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .nav-buttons button { background: #1e293b; color: #cbd5e1; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .nav-buttons button.active, .nav-buttons button:hover { background: #0284c7; color: white; }
+
+    /* Tela de Login */
+    #tela-login { position: fixed; inset: 0; background: #0f172a; z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
 
     /* Layout Principal */
     main { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
@@ -62,8 +66,31 @@
 </head>
 <body>
 
+  <!-- TELA DE LOGIN -->
+  <div id="tela-login">
+    <div class="login-card">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="font-size: 18px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h2>
+        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Acesso ao Sistema de Ordens de Serviço</p>
+      </div>
+      <form onsubmit="realizarLogin(event)" style="display: flex; flex-direction: column; gap: 15px;">
+        <div>
+          <label>Selecione seu Usuário *</label>
+          <select id="login-usuario" required style="font-weight: bold;">
+            <option value="">Carregando usuários...</option>
+          </select>
+        </div>
+        <div>
+          <label>Senha de Acesso *</label>
+          <input type="password" id="login-senha" required placeholder="Digite sua senha">
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 5px;">🔑 Entrar no Sistema</button>
+      </form>
+    </div>
+  </div>
+
   <!-- NAVBAR -->
-  <nav id="menu-navegacao">
+  <nav id="menu-navegacao" class="hidden">
     <div class="nav-brand">
       <img src="robozinho.jpg" alt="PLUG Informática" onerror="this.style.display='none';">
       <div>
@@ -77,13 +104,14 @@
       <button onclick="mostrarAba('colaboradores')" id="btn-aba-colab">👥 Colaboradores & Serviços</button>
       <button onclick="mostrarAba('comissoes')" id="btn-aba-comiss">💵 Comissões</button>
       <button onclick="mostrarAba('financeiro')" id="btn-aba-fin">📊 Lucratividade</button>
+      <button onclick="sairDoSistema()" class="btn-sm btn-red" style="padding: 8px 12px; margin-left: 10px;">🚪 Sair</button>
     </div>
   </nav>
 
   <main>
 
     <!-- ABA 1: NOVA O.S. -->
-    <div id="aba-nova-os" class="card">
+    <div id="aba-nova-os" class="card hidden">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
         <div>
           <h2 class="card-title">Nova Entrada de Equipamento</h2>
@@ -197,12 +225,12 @@
     <!-- ABA 3: COLABORADORES E VALORES DE SERVIÇOS -->
     <div id="aba-colaboradores" class="card hidden" style="max-width: 900px; margin: auto;">
       <h2 class="card-title">👥 Cadastro de Colaboradores e Tabela de Serviços</h2>
-      <p class="card-subtitle">Gerencie equipe, comissões e defina os valores padrão de mão de obra por equipamento</p>
+      <p class="card-subtitle">Gerencie equipe, comissões, senhas de acesso e defina os valores padrão de mão de obra</p>
 
       <div class="grid-2" style="gap: 20px;">
         <!-- Colaboradores -->
         <div class="section-box" style="margin-bottom: 0;">
-          <div class="section-title">👤 Novo Colaborador</div>
+          <div class="section-title">👤 Novo Colaborador / Usuário</div>
           <form onsubmit="salvarColaborador(event)" style="display: flex; flex-direction: column; gap: 10px;">
             <div>
               <label>Nome *</label>
@@ -213,7 +241,12 @@
               <select id="colab-cargo" required style="font-weight: bold;">
                 <option value="Técnico">Técnico</option>
                 <option value="Atendente de Balcão">Atendente de Balcão</option>
+                <option value="Administrador / Gestor">Administrador / Gestor</option>
               </select>
+            </div>
+            <div>
+              <label>Senha de Acesso *</label>
+              <input type="password" id="colab-senha" required placeholder="Senha para login">
             </div>
             <div>
               <label>Comissão (%) *</label>
@@ -431,7 +464,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT INTEGRADO COM FIREBASE FIRESTORE -->
+  <!-- SCRIPT INTEGRADO COM FIREBASE FIRESTORE E LOGIN -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -452,9 +485,7 @@
     window.listaOS = [];
     window.listaColaboradores = [];
     window.tabelaServicos = [];
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const tecnicoLogado = urlParams.get('tecnico');
+    window.usuarioLogado = null;
 
     // SINCRONIZAÇÃO EM TEMPO REAL COM O FIRESTORE
     onSnapshot(collection(db, "plug_os"), (snapshot) => {
@@ -473,6 +504,7 @@
     onSnapshot(collection(db, "plug_colaboradores"), (snapshot) => {
       window.listaColaboradores = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
       atualizarSelectsColaboradores();
+      atualizarSelectLogin();
       if (document.getElementById('aba-colaboradores') && !document.getElementById('aba-colaboradores').classList.contains('hidden')) {
         renderizarListaColaboradores();
       }
@@ -486,21 +518,84 @@
     });
 
     window.onload = function() {
-      if (tecnicoLogado) {
-        document.getElementById('menu-navegacao').style.display = 'none';
-        document.getElementById('titulo-comissao-pagina').innerText = `💵 Minhas Comissões - ${tecnicoLogado}`;
-        document.getElementById('filtro-colab-wrapper').style.display = 'none';
-        mostrarAba('comissoes');
+      // Verificar se há sessão salva no navegador
+      let sessaoSalva = localStorage.getItem('plug_usuario_logado');
+      if (sessaoSalva) {
+        window.usuarioLogado = JSON.parse(sessaoSalva);
+        aplicarPermissoesUsuario();
       }
     };
+
+    function atualizarSelectLogin() {
+      const selectLogin = document.getElementById('login-usuario');
+      if (!selectLogin) return;
+      if (window.listaColaboradores.length === 0) {
+        selectLogin.innerHTML = '<option value="">Nenhum usuário cadastrado (Cadastre no banco ou abra como Admin)</option>';
+        return;
+      }
+      selectLogin.innerHTML = '<option value="">Selecione seu nome...</option>' + 
+        window.listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+    }
+
+    window.realizarLogin = function(e) {
+      e.preventDefault();
+      let nomeSelecionado = document.getElementById('login-usuario').value;
+      let senhaDigitada = document.getElementById('login-senha').value.trim();
+
+      let colaborador = window.listaColaboradores.find(c => c.nome === nomeSelecionado);
+      if (!colaborador) return alert("Usuário não encontrado.");
+
+      // Se o usuário ainda não tiver senha cadastrada no banco, define a senha digitada
+      if (!colaborador.senha) {
+        colaborador.senha = "123456"; // senha padrão inicial se estiver vazia
+      }
+
+      if (colaborador.senha !== senhaDigitada) {
+        return alert("❌ Senha incorreta! Tente novamente.");
+      }
+
+      window.usuarioLogado = colaborador;
+      localStorage.setItem('plug_usuario_logado', JSON.stringify(colaborador));
+      aplicarPermissoesUsuario();
+    };
+
+    window.sairDoSistema = function() {
+      localStorage.removeItem('plug_usuario_logado');
+      window.usuarioLogado = null;
+      document.getElementById('tela-login').style.display = 'flex';
+      document.getElementById('menu-navegacao').classList.add('hidden');
+      document.getElementById('login-senha').value = '';
+    };
+
+    function aplicarPermissoesUsuario() {
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('menu-navegacao').classList.remove('hidden');
+
+      let btnFinanceiro = document.getElementById('btn-aba-fin');
+      let btnColab = document.getElementById('btn-aba-colab');
+
+      if (window.usuarioLogado.cargo === 'Técnico') {
+        // Técnico NÃO vê Lucratividade
+        if (btnFinanceiro) btnFinanceiro.style.display = 'none';
+        if (btnColab) btnColab.style.display = 'none';
+        
+        // Abre direto na aba de comissões (filtrada para o próprio técnico)
+        mostrarAba('comissoes');
+      } else {
+        // Atendente ou Gestor vê tudo
+        if (btnFinanceiro) btnFinanceiro.style.display = 'inline-block';
+        if (btnColab) btnColab.style.display = 'inline-block';
+        mostrarAba('nova-os');
+      }
+    }
 
     function atualizarSelectsColaboradores() {
       const selectAtendente = document.getElementById('cli-atendente');
       const selectTecnicoModal = document.getElementById('diag-tecnico-nome');
       const filtroComissao = document.getElementById('filtro-colab-comissao');
 
-      const atendentes = window.listaColaboradores.filter(c => c.cargo === 'Atendente de Balcão');
-      const tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico');
+      const atendentes = window.listaColaboradores.filter(c => c.cargo === 'Atendente de Balcão' || c.cargo === 'Administrador / Gestor');
+      const tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico' || c.cargo === 'Administrador / Gestor');
 
       if (selectAtendente) {
         selectAtendente.innerHTML = '<option value="">Selecione o Atendente...</option>' + 
@@ -513,14 +608,20 @@
       }
 
       if (filtroComissao) {
-        filtroComissao.innerHTML = '<option value="todos">Todos os Colaboradores</option>' + 
-          window.listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+        if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') {
+          filtroComissao.innerHTML = `<option value="${window.usuarioLogado.nome}">${window.usuarioLogado.nome}</option>`;
+          filtroComissao.disabled = true;
+        } else {
+          filtroComissao.innerHTML = '<option value="todos">Todos os Colaboradores</option>' + 
+            window.listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+          filtroComissao.disabled = false;
+        }
       }
     }
 
     window.mostrarAba = function(aba) {
-      if (tecnicoLogado && aba !== 'comissoes') {
-        alert("Acesso restrito. Técnicos possuem visualização apenas de comissões.");
+      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico' && aba === 'financeiro') {
+        alert("Acesso restrito. Técnicos não possuem acesso à aba de lucratividade.");
         return;
       }
 
@@ -568,11 +669,12 @@
         id: "COLAB-" + Date.now(),
         nome: document.getElementById('colab-nome').value.trim(),
         cargo: document.getElementById('colab-cargo').value,
+        senha: document.getElementById('colab-senha').value.trim(),
         comissao: parseFloat(document.getElementById('colab-comissao').value) || 0
       };
       await addDoc(collection(db, "plug_colaboradores"), novo);
       e.target.reset();
-      alert("✅ Colaborador cadastrado com sucesso!");
+      alert("✅ Colaborador/Usuário cadastrado com sucesso!");
     };
 
     window.renderizarListaColaboradores = function() {
@@ -585,8 +687,7 @@
       container.innerHTML = window.listaColaboradores.map(c => `
         <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
           <div>
-            <strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%)
-            ${c.cargo === 'Técnico' ? `<br><span style="color: #0284c7; font-size: 10px;">Link de acesso: <a href="?tecnico=${encodeURIComponent(c.nome)}" target="_blank">?tecnico=${c.nome}</a></span>` : ''}
+            <strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%) [Senha: ••••••]
           </div>
           <button onclick="excluirColaborador('${c.idDoc}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
         </div>
@@ -652,7 +753,7 @@
         if (os.atendente === colab.nome) {
           ganho = (vServ * colab.comissao) / 100;
         }
-      } else if (colab.cargo === 'Técnico') {
+      } else if (colab.cargo === 'Técnico' || colab.cargo === 'Administrador / Gestor') {
         if (os.tecnico === colab.nome) {
           let comissaoPct = colab.comissao / 100;
           let lucroPecasCompradas = 0;
@@ -727,7 +828,7 @@
       };
     }
 
-    // RELATÓRIO DE COMISSÕES
+    // RELATÓRIO DE COMISSÕES (Restrito ao próprio técnico se for técnico)
     window.renderizarRelatorioComissoes = function() {
       const container = document.getElementById('container-relatorio-comissoes');
       if (!container) return;
@@ -739,11 +840,13 @@
       }
 
       let alvos = [];
-      if (tecnicoLogado) {
-        alvos = window.listaColaboradores.filter(c => c.nome === tecnicoLogado);
+      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') {
+        alvos = window.listaColaboradores.filter(c => c.nome === window.usuarioLogado.nome);
+        document.getElementById('titulo-comissao-pagina').innerText = `💵 Minhas Comissões - ${window.usuarioLogado.nome}`;
       } else {
         let filtroColab = document.getElementById('filtro-colab-comissao').value;
         alvos = filtroColab === 'todos' ? window.listaColaboradores : window.listaColaboradores.filter(c => c.nome === filtroColab);
+        document.getElementById('titulo-comissao-pagina').innerText = `💵 Relatório e Acerto de Comissões`;
       }
 
       if (alvos.length === 0) {
@@ -790,7 +893,9 @@
 
           totalGanhoColab += ganhoOS;
           let statusPg = os.comissaoPaga ? '✅ Pago' : '⏳ Pendente';
-          let botaoStatusHtml = tecnicoLogado ? `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : `<button onclick="alternarStatusComissao('${os.idDoc}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
+          let botaoStatusHtml = (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') ? 
+            `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : 
+            `<button onclick="alternarStatusComissao('${os.idDoc}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
 
           return `
             <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 5px;">
@@ -821,6 +926,8 @@
 
     // RELATÓRIO FINANCEIRO E LUCRATIVIDADE POR DATA
     window.renderizarRelatorioFinanceiro = function() {
+      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') return;
+
       let dataInicio = document.getElementById('fin-data-inicio')?.value;
       let dataFim = document.getElementById('fin-data-fim')?.value;
       let containerTabela = document.getElementById('container-tabela-financeira');
@@ -926,7 +1033,7 @@
     };
 
     window.alternarStatusComissao = async function(idDoc) {
-      if (tecnicoLogado) return;
+      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') return;
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (os) {
         let novoStatus = !os.comissaoPaga;
@@ -1104,7 +1211,7 @@
       document.getElementById('diag-status').value = os.status;
       
       let selTec = document.getElementById('diag-tecnico-nome');
-      let tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico');
+      let tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico' || c.cargo === 'Administrador / Gestor');
       selTec.innerHTML = '<option value="">Selecione o Técnico...</option>' + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
       selTec.value = os.tecnico || '';
 
