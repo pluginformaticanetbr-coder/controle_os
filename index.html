@@ -431,23 +431,61 @@
     </div>
   </div>
 
-  <script>
-    let listaOS = JSON.parse(localStorage.getItem('pluginformatica_os_db')) || [];
-    let listaColaboradores = JSON.parse(localStorage.getItem('pluginformatica_colab_db')) || [];
-    let tabelaServicos = JSON.parse(localStorage.getItem('pluginformatica_serv_db')) || [];
+  <!-- SCRIPT INTEGRADO COM FIREBASE FIRESTORE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDqU3G1Myg9rjoy0tYOoZZGGdY8rjukUZ0",
+      authDomain: "controle-os-plug.firebaseapp.com",
+      projectId: "controle-os-plug",
+      storageBucket: "controle-os-plug.firebasestorage.app",
+      messagingSenderId: "565021979624",
+      appId: "1:565021979624:web:d4c204f4f5e4aa3a9a2a5d",
+      measurementId: "G-JW4LT3WYF2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.listaOS = [];
+    window.listaColaboradores = [];
+    window.tabelaServicos = [];
 
     const urlParams = new URLSearchParams(window.location.search);
     const tecnicoLogado = urlParams.get('tecnico');
 
-    function salvarDadosLocal() {
-      localStorage.setItem('pluginformatica_os_db', JSON.stringify(listaOS));
-      localStorage.setItem('pluginformatica_colab_db', JSON.stringify(listaColaboradores));
-      localStorage.setItem('pluginformatica_serv_db', JSON.stringify(tabelaServicos));
-    }
+    // SINCRONIZAÇÃO EM TEMPO REAL COM O FIRESTORE
+    onSnapshot(collection(db, "plug_os"), (snapshot) => {
+      window.listaOS = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      if (document.getElementById('aba-lista-os') && !document.getElementById('aba-lista-os').classList.contains('hidden')) {
+        renderizarListaOS();
+      }
+      if (document.getElementById('aba-comissoes') && !document.getElementById('aba-comissoes').classList.contains('hidden')) {
+        renderizarRelatorioComissoes();
+      }
+      if (document.getElementById('aba-financeiro') && !document.getElementById('aba-financeiro').classList.contains('hidden')) {
+        renderizarRelatorioFinanceiro();
+      }
+    });
+
+    onSnapshot(collection(db, "plug_colaboradores"), (snapshot) => {
+      window.listaColaboradores = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      atualizarSelectsColaboradores();
+      if (document.getElementById('aba-colaboradores') && !document.getElementById('aba-colaboradores').classList.contains('hidden')) {
+        renderizarListaColaboradores();
+      }
+    });
+
+    onSnapshot(collection(db, "plug_tabela_servicos"), (snapshot) => {
+      window.tabelaServicos = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      if (document.getElementById('aba-colaboradores') && !document.getElementById('aba-colaboradores').classList.contains('hidden')) {
+        renderizarTabelaServicos();
+      }
+    });
 
     window.onload = function() {
-      atualizarSelectsColaboradores();
-
       if (tecnicoLogado) {
         document.getElementById('menu-navegacao').style.display = 'none';
         document.getElementById('titulo-comissao-pagina').innerText = `💵 Minhas Comissões - ${tecnicoLogado}`;
@@ -461,8 +499,8 @@
       const selectTecnicoModal = document.getElementById('diag-tecnico-nome');
       const filtroComissao = document.getElementById('filtro-colab-comissao');
 
-      const atendentes = listaColaboradores.filter(c => c.cargo === 'Atendente de Balcão');
-      const tecnicos = listaColaboradores.filter(c => c.cargo === 'Técnico');
+      const atendentes = window.listaColaboradores.filter(c => c.cargo === 'Atendente de Balcão');
+      const tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico');
 
       if (selectAtendente) {
         selectAtendente.innerHTML = '<option value="">Selecione o Atendente...</option>' + 
@@ -476,11 +514,11 @@
 
       if (filtroComissao) {
         filtroComissao.innerHTML = '<option value="todos">Todos os Colaboradores</option>' + 
-          listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+          window.listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
       }
     }
 
-    function mostrarAba(aba) {
+    window.mostrarAba = function(aba) {
       if (tecnicoLogado && aba !== 'comissoes') return;
 
       const abasIds = ['aba-nova-os', 'aba-lista-os', 'aba-colaboradores', 'aba-comissoes', 'aba-financeiro'];
@@ -518,10 +556,10 @@
       } else if (aba === 'financeiro') {
         renderizarRelatorioFinanceiro();
       }
-    }
+    };
 
     // CADASTRO DE COLABORADORES
-    function salvarColaborador(e) {
+    window.salvarColaborador = async function(e) {
       e.preventDefault();
       const novo = {
         id: "COLAB-" + Date.now(),
@@ -529,41 +567,35 @@
         cargo: document.getElementById('colab-cargo').value,
         comissao: parseFloat(document.getElementById('colab-comissao').value) || 0
       };
-      listaColaboradores.push(novo);
-      salvarDadosLocal();
-      atualizarSelectsColaboradores();
+      await addDoc(collection(db, "plug_colaboradores"), novo);
       e.target.reset();
-      renderizarListaColaboradores();
       alert("✅ Colaborador cadastrado com sucesso!");
-    }
+    };
 
-    function renderizarListaColaboradores() {
+    window.renderizarListaColaboradores = function() {
       const container = document.getElementById('lista-colaboradores');
       if (!container) return;
-      if (listaColaboradores.length === 0) {
+      if (window.listaColaboradores.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 10px; color: #94a3b8; font-size: 11px;">Nenhum colaborador.</div>`;
         return;
       }
-      container.innerHTML = listaColaboradores.map(c => `
+      container.innerHTML = window.listaColaboradores.map(c => `
         <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
           <div>
             <strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%)
             ${c.cargo === 'Técnico' ? `<br><span style="color: #0284c7; font-size: 10px;">Link de acesso: <a href="?tecnico=${encodeURIComponent(c.nome)}" target="_blank">?tecnico=${c.nome}</a></span>` : ''}
           </div>
-          <button onclick="excluirColaborador('${c.id}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
+          <button onclick="excluirColaborador('${c.idDoc}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
         </div>
       `).join('');
-    }
+    };
 
-    function excluirColaborador(id) {
-      listaColaboradores = listaColaboradores.filter(c => c.id !== id);
-      salvarDadosLocal();
-      atualizarSelectsColaboradores();
-      renderizarListaColaboradores();
-    }
+    window.excluirColaborador = async function(idDoc) {
+      await deleteDoc(doc(db, "plug_colaboradores", idDoc));
+    };
 
     // TABELA DE VALORES DE SERVIÇOS
-    function salvarTabelaServico(e) {
+    window.salvarTabelaServico = async function(e) {
       e.preventDefault();
       let novoServ = {
         id: "SERV-" + Date.now(),
@@ -571,45 +603,41 @@
         nome: document.getElementById('serv-nome').value.trim(),
         valor: parseFloat(document.getElementById('serv-valor').value) || 0
       };
-      tabelaServicos.push(novoServ);
-      salvarDadosLocal();
+      await addDoc(collection(db, "plug_tabela_servicos"), novoServ);
       e.target.reset();
-      renderizarTabelaServicos();
       alert("✅ Serviço cadastrado na tabela padrão!");
-    }
+    };
 
-    function renderizarTabelaServicos() {
+    window.renderizarTabelaServicos = function() {
       let container = document.getElementById('lista-tabela-servicos');
       if (!container) return;
-      if (tabelaServicos.length === 0) {
+      if (window.tabelaServicos.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 10px; color: #94a3b8; font-size: 11px;">Nenhum serviço cadastrado.</div>`;
         return;
       }
-      container.innerHTML = tabelaServicos.map(s => `
+      container.innerHTML = window.tabelaServicos.map(s => `
         <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
           <div><strong>[${s.tipo}]</strong> ${s.nome} - <span style="color: #059669; font-weight: bold;">R$ ${s.valor.toFixed(2)}</span></div>
-          <button onclick="excluirTabelaServico('${s.id}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
+          <button onclick="excluirTabelaServico('${s.idDoc}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
         </div>
       `).join('');
-    }
+    };
 
-    function excluirTabelaServico(id) {
-      tabelaServicos = tabelaServicos.filter(s => s.id !== id);
-      salvarDadosLocal();
-      renderizarTabelaServicos();
-    }
+    window.excluirTabelaServico = async function(idDoc) {
+      await deleteDoc(doc(db, "plug_tabela_servicos", idDoc));
+    };
 
-    function aplicarServicoCatalogo() {
+    window.aplicarServicoCatalogo = function() {
       let select = document.getElementById('select-servico-catalogo');
       let servId = select.value;
       if (!servId) return alert("Selecione um serviço da lista.");
-      let serv = tabelaServicos.find(s => s.id === servId);
+      let serv = window.tabelaServicos.find(s => s.id === servId);
       if (serv) {
         document.getElementById('diag-vservico').value = serv.valor.toFixed(2);
         let solAtual = document.getElementById('diag-solucao').value;
         document.getElementById('diag-solucao').value = solAtual ? solAtual + " + " + serv.nome : serv.nome;
       }
-    }
+    };
 
     // CÁLCULO DE COMISSÃO POR O.S.
     function calcularComissaoOS(os, colab) {
@@ -677,14 +705,14 @@
       let formaPag = os.formaPagamento || 'pix_dinheiro';
 
       if (formaPag === 'pix_dinheiro') {
-        descontoPix = valorBrutoInicial * 0.05; // 5% de desconto
+        descontoPix = valorBrutoInicial * 0.05;
         valorFinalCliente = valorBrutoInicial - descontoPix;
       } else if (formaPag === 'debito') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.014; // 1,40% de taxa no débito
+        taxaCartaoMoeda = valorBrutoInicial * 0.014;
       } else if (formaPag === 'credito_avista') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.0342; // 3,42% de taxa
+        taxaCartaoMoeda = valorBrutoInicial * 0.0342;
       } else if (formaPag === 'credito_2x') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.0719; // 7,19% de taxa
+        taxaCartaoMoeda = valorBrutoInicial * 0.0719;
       }
 
       return {
@@ -697,10 +725,10 @@
     }
 
     // RELATÓRIO DE COMISSÕES
-    function renderizarRelatorioComissoes() {
+    window.renderizarRelatorioComissoes = function() {
       const container = document.getElementById('container-relatorio-comissoes');
       if (!container) return;
-      let osConcluidas = listaOS.filter(os => os.status === 'Entregue / Concluído');
+      let osConcluidas = window.listaOS.filter(os => os.status === 'Entregue / Concluído');
 
       if (osConcluidas.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhuma O.S. concluída para cálculo de comissão.</div>`;
@@ -709,10 +737,10 @@
 
       let alvos = [];
       if (tecnicoLogado) {
-        alvos = listaColaboradores.filter(c => c.nome === tecnicoLogado);
+        alvos = window.listaColaboradores.filter(c => c.nome === tecnicoLogado);
       } else {
         let filtroColab = document.getElementById('filtro-colab-comissao').value;
-        alvos = filtroColab === 'todos' ? listaColaboradores : listaColaboradores.filter(c => c.nome === filtroColab);
+        alvos = filtroColab === 'todos' ? window.listaColaboradores : window.listaColaboradores.filter(c => c.nome === filtroColab);
       }
 
       if (alvos.length === 0) {
@@ -759,7 +787,7 @@
 
           totalGanhoColab += ganhoOS;
           let statusPg = os.comissaoPaga ? '✅ Pago' : '⏳ Pendente';
-          let botaoStatusHtml = tecnicoLogado ? `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : `<button onclick="alternarStatusComissao('${os.id}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
+          let botaoStatusHtml = tecnicoLogado ? `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : `<button onclick="alternarStatusComissao('${os.idDoc}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
 
           return `
             <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 5px;">
@@ -786,16 +814,16 @@
         `;
       });
       container.innerHTML = html;
-    }
+    };
 
     // RELATÓRIO FINANCEIRO E LUCRATIVIDADE POR DATA
-    function renderizarRelatorioFinanceiro() {
+    window.renderizarRelatorioFinanceiro = function() {
       let dataInicio = document.getElementById('fin-data-inicio')?.value;
       let dataFim = document.getElementById('fin-data-fim')?.value;
       let containerTabela = document.getElementById('container-tabela-financeira');
       if (!containerTabela) return;
 
-      let osConcluidas = listaOS.filter(os => os.status === 'Entregue / Concluído');
+      let osConcluidas = window.listaOS.filter(os => os.status === 'Entregue / Concluído');
 
       if (dataInicio || dataFim) {
         osConcluidas = osConcluidas.filter(os => {
@@ -826,7 +854,7 @@
         let calc = calcularTaxasEValoresOS(os);
 
         let comissaoOS = 0;
-        listaColaboradores.forEach(colab => {
+        window.listaColaboradores.forEach(colab => {
           comissaoOS += calcularComissaoOS(os, colab);
         });
 
@@ -886,33 +914,32 @@
       document.getElementById('fin-resumo-custos').innerText = `R$ ${totalCustosEComissoes.toFixed(2)}`;
       document.getElementById('fin-resumo-liquido').innerText = `R$ ${totalLucroLiquidoGeral.toFixed(2)}`;
       containerTabela.innerHTML = htmlTabela;
-    }
+    };
 
-    function limparFiltroDatas() {
+    window.limparFiltroDatas = function() {
       document.getElementById('fin-data-inicio').value = '';
       document.getElementById('fin-data-fim').value = '';
       renderizarRelatorioFinanceiro();
-    }
+    };
 
-    function alternarStatusComissao(osId) {
+    window.alternarStatusComissao = async function(idDoc) {
       if (tecnicoLogado) return;
-      let os = listaOS.find(o => o.id === osId);
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (os) {
-        os.comissaoPaga = !os.comissaoPaga;
-        salvarDadosLocal();
-        renderizarRelatorioComissoes();
+        let novoStatus = !os.comissaoPaga;
+        await updateDoc(doc(db, "plug_os", idDoc), { comissaoPaga: novoStatus });
       }
-    }
+    };
 
-    function buscarClientePorTelefone(val) {
+    window.buscarClientePorTelefone = function(val) {
       let fone = val.replace(/\D/g, '');
       if (fone.length < 4) return;
-      let enc = listaOS.find(o => o.cliente.telefone.replace(/\D/g, '').includes(fone));
+      let enc = window.listaOS.find(o => o.cliente.telefone.replace(/\D/g, '').includes(fone));
       if (enc) document.getElementById('cli-nome').value = enc.cliente.nome;
-    }
+    };
 
-    function clonarOS(idOriginal) {
-      let osAntiga = listaOS.find(o => o.id === idOriginal);
+    window.clonarOS = function(idOriginal) {
+      let osAntiga = window.listaOS.find(o => o.id === idOriginal);
       if (!osAntiga) return;
 
       document.getElementById('cli-fone').value = osAntiga.cliente.telefone || '';
@@ -927,9 +954,9 @@
       mostrarAba('nova-os');
       document.getElementById('subtitulo-form').innerHTML = `🔄 <strong style="color: #7c3aed;">Clonado da O.S. ${osAntiga.id}</strong> (Preencha o novo defeito e salve)`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    };
 
-    function salvarNovaOS(e) {
+    window.salvarNovaOS = async function(e) {
       e.preventDefault();
       let nova = {
         id: "OS-" + Math.floor(100000 + Math.random() * 900000),
@@ -959,8 +986,8 @@
         notasServico: "",
         comissaoPaga: false
       };
-      listaOS.unshift(nova);
-      salvarDadosLocal();
+
+      await addDoc(collection(db, "plug_os"), nova);
       
       document.getElementById('subtitulo-form').innerHTML = 'Preencha os dados abaixo para gerar o comprovante de recepção';
 
@@ -968,15 +995,15 @@
       e.target.reset();
       gerarComprovanteImpressao(nova);
       mostrarAba('lista-os');
-    }
+    };
 
-    function renderizarListaOS() {
+    window.renderizarListaOS = function() {
       let container = document.getElementById('container-lista-os');
       if (!container) return;
       let statusFiltro = document.getElementById('filtro-status').value;
       let busca = (document.getElementById('campo-busca')?.value || '').toLowerCase().trim();
 
-      let filtradas = listaOS;
+      let filtradas = window.listaOS;
       if (statusFiltro !== 'todos') filtradas = filtradas.filter(o => o.status === statusFiltro);
       if (busca) {
         filtradas = filtradas.filter(o => 
@@ -1053,28 +1080,28 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
               <div style="display: flex; gap: 6px;">
-                <button onclick="abrirModalDiagnostico('${os.id}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
+                <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
                 <button onclick="clonarOS('${os.id}')" class="btn-sm btn-purple">📋 Clonar O.S.</button>
               </div>
               <div style="display: flex; gap: 6px;">
                 <button onclick="enviarWhatsAppOS('${os.id}')" class="btn-sm btn-emerald">📲 WhatsApp</button>
                 <button onclick='gerarComprovanteImpressao(${JSON.stringify(os)})' class="btn-sm btn-dark">🖨️ PDF</button>
-                <button onclick="excluirOS('${os.id}')" class="btn-sm btn-red">🗑️</button>
+                <button onclick="excluirOS('${os.idDoc}')" class="btn-sm btn-red">🗑️</button>
               </div>
             </div>
           </div>
         `;
       }).join('');
-    }
+    };
 
-    function abrirModalDiagnostico(id) {
-      let os = listaOS.find(o => o.id === id);
+    window.abrirModalDiagnostico = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
-      document.getElementById('diag-os-id').value = os.id;
+      document.getElementById('diag-os-id').value = os.idDoc;
       document.getElementById('diag-status').value = os.status;
       
       let selTec = document.getElementById('diag-tecnico-nome');
-      let tecnicos = listaColaboradores.filter(c => c.cargo === 'Técnico');
+      let tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico');
       selTec.innerHTML = '<option value="">Selecione o Técnico...</option>' + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
       selTec.value = os.tecnico || '';
 
@@ -1087,8 +1114,8 @@
       document.getElementById('diag-forma-pagamento').value = os.formaPagamento || 'pix_dinheiro';
 
       let selCat = document.getElementById('select-servico-catalogo');
-      let servFiltrados = tabelaServicos.filter(s => s.tipo.toLowerCase() === os.equipamento.tipo.toLowerCase());
-      if (servFiltrados.length === 0) servFiltrados = tabelaServicos;
+      let servFiltrados = window.tabelaServicos.filter(s => s.tipo.toLowerCase() === os.equipamento.tipo.toLowerCase());
+      if (servFiltrados.length === 0) servFiltrados = window.tabelaServicos;
 
       selCat.innerHTML = '<option value="">Selecione um serviço da tabela padrão...</option>' + 
         servFiltrados.map(s => `<option value="${s.id}">[${s.tipo}] ${s.nome} - R$ ${s.valor.toFixed(2)}</option>`).join('');
@@ -1100,9 +1127,9 @@
       else pecas.forEach(p => adicionarLinhaPeca(p.nome, p.custo, p.venda, p.origem, p.previsao, p.regraTecnico));
 
       document.getElementById('modal-diagnostico').style.display = 'flex';
-    }
+    };
 
-    function adicionarLinhaPeca(nome = '', custo = '', venda = '', origem = 'Em Estoque', previsao = '', regraTecnico = 'opcaoA') {
+    window.adicionarLinhaPeca = function(nome = '', custo = '', venda = '', origem = 'Em Estoque', previsao = '', regraTecnico = 'opcaoA') {
       let c = document.getElementById('container-pecas-modal');
       let div = document.createElement('div');
       div.className = "linha-peca";
@@ -1140,9 +1167,9 @@
         </div>
       `;
       c.appendChild(div);
-    }
+    };
 
-    function alterarOrigemPeca(selectEl) {
+    window.alterarOrigemPeca = function(selectEl) {
       let linha = selectEl.closest('.linha-peca');
       let blocoValores = linha.querySelector('.bloco-valores');
       let inputPrevisao = linha.querySelector('.input-peca-previsao');
@@ -1172,65 +1199,61 @@
         inputPrevisao.style.display = 'block';
         selectRegraTec.style.display = 'none';
       }
-    }
+    };
 
-    function fecharModalDiagnostico() {
+    window.fecharModalDiagnostico = function() {
       document.getElementById('modal-diagnostico').style.display = 'none';
-    }
+    };
 
-    function salvarDiagnosticoOS() {
-      let id = document.getElementById('diag-os-id').value;
-      let idx = listaOS.findIndex(o => o.id === id);
-      if (idx !== -1) {
-        let linhas = document.querySelectorAll('.linha-peca');
-        let novasPecas = [];
-        linhas.forEach(l => {
-          let nome = l.querySelector('.input-peca-nome').value.trim();
-          let origem = l.querySelector('.input-peca-origem').value;
-          let regraTecnico = l.querySelector('.input-peca-regra-tec').value;
-          let custo = 0;
-          let venda = 0;
-          let previsao = '';
+    window.salvarDiagnosticoOS = async function() {
+      let idDoc = document.getElementById('diag-os-id').value;
+      let linhas = document.querySelectorAll('.linha-peca');
+      let novasPecas = [];
+      linhas.forEach(l => {
+        let nome = l.querySelector('.input-peca-nome').value.trim();
+        let origem = l.querySelector('.input-peca-origem').value;
+        let regraTecnico = l.querySelector('.input-peca-regra-tec').value;
+        let custo = 0;
+        let venda = 0;
+        let previsao = '';
 
-          if (origem !== 'O cliente trouxe a peça') {
-            custo = parseFloat(l.querySelector('.input-peca-custo').value) || 0;
-            venda = parseFloat(l.querySelector('.input-peca-venda').value) || 0;
-            previsao = l.querySelector('.input-peca-previsao').value.trim();
-          }
+        if (origem !== 'O cliente trouxe a peça') {
+          custo = parseFloat(l.querySelector('.input-peca-custo').value) || 0;
+          venda = parseFloat(l.querySelector('.input-peca-venda').value) || 0;
+          previsao = l.querySelector('.input-peca-previsao').value.trim();
+        }
 
-          if (nome || venda > 0 || origem === 'O cliente trouxe a peça') {
-            novasPecas.push({ nome: nome || 'Peça', custo: custo, venda: venda, origem: origem, previsao: previsao, regraTecnico: regraTecnico });
-          }
-        });
+        if (nome || venda > 0 || origem === 'O cliente trouxe a peça') {
+          novasPecas.push({ nome: nome || 'Peça', custo: custo, venda: venda, origem: origem, previsao: previsao, regraTecnico: regraTecnico });
+        }
+      });
 
-        listaOS[idx].status = document.getElementById('diag-status').value;
-        listaOS[idx].tecnico = document.getElementById('diag-tecnico-nome').value;
-        listaOS[idx].diagnostico = document.getElementById('diag-tecnico').value.trim();
-        listaOS[idx].solucao = document.getElementById('diag-solucao').value.trim();
-        listaOS[idx].instrucoesRetirada = document.getElementById('diag-instrucoes-retirada').value.trim();
-        listaOS[idx].carimboCabeca = document.getElementById('diag-carimbo-cabeca').checked;
-        listaOS[idx].formaPagamento = document.getElementById('diag-forma-pagamento').value;
-        listaOS[idx].pecas = novasPecas;
-        listaOS[idx].valorServico = parseFloat(document.getElementById('diag-vservico').value) || 0;
-        listaOS[idx].notasServico = document.getElementById('diag-notas-serv').value.trim();
+      let dadosAtualizados = {
+        status: document.getElementById('diag-status').value,
+        tecnico: document.getElementById('diag-tecnico-nome').value,
+        diagnostico: document.getElementById('diag-tecnico').value.trim(),
+        solucao: document.getElementById('diag-solucao').value.trim(),
+        instrucoesRetirada: document.getElementById('diag-instrucoes-retirada').value.trim(),
+        carimboCabeca: document.getElementById('diag-carimbo-cabeca').checked,
+        formaPagamento: document.getElementById('diag-forma-pagamento').value,
+        pecas: novasPecas,
+        valorServico: parseFloat(document.getElementById('diag-vservico').value) || 0,
+        notasServico: document.getElementById('diag-notas-serv').value.trim()
+      };
 
-        salvarDadosLocal();
-        fecharModalDiagnostico();
-        renderizarListaOS();
-        alert("✅ Ordem de Serviço atualizada com sucesso!");
+      await updateDoc(doc(db, "plug_os", idDoc), dadosAtualizados);
+      fecharModalDiagnostico();
+      alert("✅ Ordem de Serviço atualizada com sucesso!");
+    };
+
+    window.excluirOS = async function(idDoc) {
+      if (confirm(`Deseja realmente remover esta O.S.?`)) {
+        await deleteDoc(doc(db, "plug_os", idDoc));
       }
-    }
+    };
 
-    function excluirOS(id) {
-      if (confirm(`Deseja realmente remover a ${id}?`)) {
-        listaOS = listaOS.filter(o => o.id !== id);
-        salvarDadosLocal();
-        renderizarListaOS();
-      }
-    }
-
-    function enviarWhatsAppOS(id) {
-      let os = listaOS.find(o => o.id === id);
+    window.enviarWhatsAppOS = function(id) {
+      let os = window.listaOS.find(o => o.id === id);
       if (!os) return;
       let fone = os.cliente.telefone.replace(/\D/g, '');
       let pecas = os.pecas || [];
@@ -1268,9 +1291,9 @@
       }
       msg += `-----------------------------------\nAvenida Portugal, 20 - Centro, Mauá - SP\n📞 (11) 95820-8637`;
       window.open(`https://api.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msg)}`, '_blank');
-    }
+    };
 
-    function gerarComprovanteImpressao(os) {
+    window.gerarComprovanteImpressao = function(os) {
       let win = window.open('', '_blank');
       if (!win) return alert("Permita pop-ups no navegador para imprimir.");
       let dt = new Date(os.dataEntrada).toLocaleString('pt-BR');
@@ -1395,7 +1418,7 @@
         </html>
       `);
       win.document.close();
-    }
+    };
   </script>
 </body>
 </html>
