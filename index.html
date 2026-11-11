@@ -519,7 +519,10 @@
     }
 
     window.mostrarAba = function(aba) {
-      if (tecnicoLogado && aba !== 'comissoes') return;
+      if (tecnicoLogado && aba !== 'comissoes') {
+        alert("Acesso restrito. Técnicos possuem visualização apenas de comissões.");
+        return;
+      }
 
       const abasIds = ['aba-nova-os', 'aba-lista-os', 'aba-colaboradores', 'aba-comissoes', 'aba-financeiro'];
       abasIds.forEach(id => {
