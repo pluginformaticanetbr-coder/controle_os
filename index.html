@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PLUG Informática - Ordem de Serviço</title>
+  <title>PLUG Informática - Sistema de O.S. e Gestão de Estoque</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background-color: #f1f5f9; color: #1e293b; padding-bottom: 50px; }
@@ -71,7 +71,7 @@
     <div class="login-card">
       <div style="text-align: center; margin-bottom: 20px;">
         <h2 style="font-size: 18px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h2>
-        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Acesso ao Sistema de Ordens de Serviço</p>
+        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Acesso ao Sistema de O.S. e Gestão de Estoque</p>
       </div>
       <form onsubmit="realizarLogin(event)" style="display: flex; flex-direction: column; gap: 15px;">
         <div>
@@ -101,9 +101,11 @@
     <div class="nav-buttons" id="nav-botoes-container">
       <button onclick="mostrarAba('nova-os')" id="btn-aba-nova" class="active">➕ Nova O.S.</button>
       <button onclick="mostrarAba('lista-os')" id="btn-aba-lista">📋 Gerenciar O.S.</button>
-      <button onclick="mostrarAba('colaboradores')" id="btn-aba-colab">👥 Colaboradores & Serviços</button>
+      <button onclick="mostrarAba('estoque')" id="btn-aba-est">📦 Estoque & SKU</button>
+      <button onclick="mostrarAba('historico-mov')" id="btn-aba-hist">📊 Histórico Saídas</button>
+      <button onclick="mostrarAba('colaboradores')" id="btn-aba-colab">👥 Colaboradores</button>
       <button onclick="mostrarAba('comissoes')" id="btn-aba-comiss">💵 Comissões</button>
-      <button onclick="mostrarAba('financeiro')" id="btn-aba-fin">📊 Lucratividade</button>
+      <button onclick="mostrarAba('financeiro')" id="btn-aba-fin">📈 Lucratividade</button>
       <button onclick="sairDoSistema()" class="btn-sm btn-red" style="padding: 8px 12px; margin-left: 10px;">🚪 Sair</button>
     </div>
   </nav>
@@ -124,7 +126,6 @@
       </div>
 
       <form onsubmit="salvarNovaOS(event)">
-        
         <div class="section-box">
           <div class="section-title">👤 Dados do Cliente e Recepção</div>
           <div class="grid-3">
@@ -189,7 +190,6 @@
         <div class="alert-box">
           <p style="font-weight: bold; margin-bottom: 4px;">⚡ Aprovação Automática de Orçamento:</p>
           <p>• Serviços/Peças até <strong>R$ 240,00</strong> (Computadores/Geral) | • Impressora até <strong>R$ 280,00</strong> | • Notebook até <strong>R$ 400,00</strong></p>
-          <p style="font-size: 11px; margin-top: 3px; color: #92400e;">Valores superiores serão submetidos à prévia consulta e aprovação do cliente.</p>
         </div>
 
         <button type="submit" class="btn-primary">💾 Dar Entrada e Gerar Ordem de Serviço</button>
@@ -204,31 +204,73 @@
           <p class="card-subtitle" style="margin-bottom:0;">Acompanhe diagnósticos, orçamentos e histórico</p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 600px; justify-content: flex-end;">
-          <input type="text" id="campo-busca" oninput="renderizarListaOS()" placeholder="🔍 Buscar cliente, fone, O.S., modelo ou S/N..." style="flex: 1; min-width: 220px; padding: 8px 12px; font-size: 12px;">
+          <input type="text" id="campo-busca" oninput="renderizarListaOS()" placeholder="🔍 Buscar cliente, fone, O.S., modelo..." style="flex: 1; min-width: 220px; padding: 8px 12px; font-size: 12px;">
           <select id="filtro-status" onchange="renderizarListaOS()" style="width: auto; padding: 8px 12px; font-size: 12px; font-weight: bold;">
             <option value="todos">Todos os Status</option>
             <option value="Aguardando Avaliação">🟡 Aguardando Avaliação</option>
             <option value="Em Diagnóstico">🔍 Em Diagnóstico</option>
             <option value="Orçamento Enviado">⏳ Orçamento Enviado</option>
             <option value="Aprovado / Em Reparo">🛠️ Aprovado / Em Reparo</option>
-            <option value="Não Aprovado pelo Cliente">❌ Não Aprovado pelo Cliente</option>
             <option value="Pronto para Retirada">✅ Pronto para Retirada</option>
             <option value="Entregue / Concluído">🎉 Entregue / Concluído</option>
             <option value="Cancelado / Sem Conserto">❌ Cancelado / Sem Conserto</option>
           </select>
         </div>
       </div>
-
       <div id="container-lista-os" style="display: flex; flex-direction: column; gap: 15px;"></div>
     </div>
 
-    <!-- ABA 3: COLABORADORES E VALORES DE SERVIÇOS -->
+    <!-- ABA 3: ESTOQUE E SKU -->
+    <div id="aba-estoque" class="card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+        <div>
+          <h2 class="card-title">📦 Gestão de Estoque & Catálogo SKU</h2>
+          <p class="card-subtitle" style="margin-bottom:0;">Controle integrado de produtos, localizações e leitura por código de barras</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button onclick="abrirModalProduto()" class="btn-sm btn-sky">+ Novo Produto</button>
+          <button onclick="abrirModalEntrada()" class="btn-sm btn-emerald">📥 Entrada Mercadoria</button>
+          <button onclick="abrirModalSaida()" class="btn-sm btn-dark">📤 Saída Mercadoria</button>
+          <button onclick="abrirModalImportarDBF()" class="btn-sm btn-purple">📂 Importar DBF / ASCII</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+        <input type="text" id="busca-estoque" oninput="renderizarTabelaEstoque()" placeholder="🔍 Buscar por código de barras, SKU ou descrição..." style="flex: 1; min-width: 250px; padding: 10px;">
+        <select id="filtro-local-estoque" onchange="renderizarTabelaEstoque()" style="width: 200px; padding: 10px;">
+          <option value="todos">Todas as Localizações</option>
+        </select>
+      </div>
+
+      <div id="container-tabela-estoque" style="overflow-x: auto;"></div>
+    </div>
+
+    <!-- ABA 4: HISTÓRICO DE SAÍDAS -->
+    <div id="aba-historico-mov" class="card hidden">
+      <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 class="card-title">📊 Histórico de Saídas e Movimentações</h2>
+          <p class="card-subtitle" style="margin-bottom:0;">Consulte todas as saídas por canal (TikTok, Shopee, Mercado Livre, Afiliados, Revenda)</p>
+        </div>
+        <select id="filtro-canal-rel" onchange="renderizarHistoricoMovimentacoes()" style="width: 220px; padding: 8px; font-weight: bold;">
+          <option value="todos">Todos os Canais / Tipos</option>
+          <option value="Venda - TikTok">TikTok</option>
+          <option value="Venda - Shopee">Shopee</option>
+          <option value="Venda - Mercado Livre">Mercado Livre</option>
+          <option value="Venda - Afiliados">Afiliados</option>
+          <option value="Venda - Revenda">Revenda</option>
+          <option value="Baixa de Estoque">Baixa de Estoque</option>
+        </select>
+      </div>
+      <div id="container-historico-mov" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+
+    <!-- ABA 5: COLABORADORES -->
     <div id="aba-colaboradores" class="card hidden" style="max-width: 900px; margin: auto;">
       <h2 class="card-title">👥 Cadastro de Colaboradores e Tabela de Serviços</h2>
       <p class="card-subtitle">Gerencie equipe, comissões, senhas de acesso e defina os valores padrão de mão de obra</p>
 
       <div class="grid-2" style="gap: 20px;">
-        <!-- Colaboradores -->
         <div class="section-box" style="margin-bottom: 0;">
           <div class="section-title">👤 Novo Colaborador / Usuário</div>
           <form onsubmit="salvarColaborador(event)" style="display: flex; flex-direction: column; gap: 10px;">
@@ -257,35 +299,34 @@
           <div id="lista-colaboradores" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;"></div>
         </div>
 
-        <!-- Tabela de Serviços por Equipamento -->
         <div class="section-box" style="margin-bottom: 0;">
           <div class="section-title">⚙️ Tabela de Valores de Serviços</div>
           <form onsubmit="salvarTabelaServico(event)" style="display: flex; flex-direction: column; gap: 10px;">
             <div>
-              <label>Tipo de Equipamento (Digite livremente) *</label>
-              <input type="text" id="serv-tipo" required placeholder="Ex: Notebook, Impressora, etc.">
+              <label>Tipo de Equipamento *</label>
+              <input type="text" id="serv-tipo" required placeholder="Ex: Notebook, Impressora">
             </div>
             <div>
               <label>Descrição do Serviço / Mão de Obra *</label>
-              <input type="text" id="serv-nome" required placeholder="Ex: Formatação e Backup / Limpeza">
+              <input type="text" id="serv-nome" required placeholder="Ex: Formatação e Backup">
             </div>
             <div>
               <label>Valor Padrão (R$) *</label>
               <input type="number" step="0.01" id="serv-valor" required placeholder="0.00">
             </div>
-            <button type="submit" class="btn-sm btn-emerald" style="padding: 10px; font-weight: bold;">Cadastrar Valor de Serviço</button>
+            <button type="submit" class="btn-sm btn-emerald" style="padding: 10px; font-weight: bold;">Cadastrar Serviço</button>
           </form>
           <div id="lista-tabela-servicos" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;"></div>
         </div>
       </div>
     </div>
 
-    <!-- ABA 4: COMISSÕES -->
+    <!-- ABA 6: COMISSÕES -->
     <div id="aba-comissoes" class="card hidden" style="max-width: 900px; margin: auto;">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <div>
           <h2 class="card-title" id="titulo-comissao-pagina">💵 Relatório e Acerto de Comissões</h2>
-          <p class="card-subtitle" style="margin-bottom:0;">Cálculo inteligente baseado no tipo de peça e serviço realizado</p>
+          <p class="card-subtitle" style="margin-bottom:0;">Cálculo inteligente baseado em peças e serviços</p>
         </div>
         <div id="filtro-colab-wrapper">
           <select id="filtro-colab-comissao" onchange="renderizarRelatorioComissoes()" style="padding: 8px 12px; font-size: 12px; font-weight: bold;">
@@ -293,20 +334,18 @@
           </select>
         </div>
       </div>
-
       <div id="container-relatorio-comissoes" style="display: flex; flex-direction: column; gap: 15px;"></div>
     </div>
 
-    <!-- ABA 5: RELATÓRIO FINANCEIRO E LUCRATIVIDADE -->
+    <!-- ABA 7: LUCRATIVIDADE -->
     <div id="aba-financeiro" class="card hidden" style="max-width: 950px; margin: auto;">
       <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
-        <h2 class="card-title">📊 Relatório de Lucratividade (Bruto, Taxas & Líquido)</h2>
-        <p class="card-subtitle" style="margin-bottom:0;">Análise financeira detalhada de faturamento, desconto Pix, taxas de cartão e custos</p>
+        <h2 class="card-title">📈 Relatório de Lucratividade (Bruto, Taxas & Líquido)</h2>
+        <p class="card-subtitle" style="margin-bottom:0;">Análise financeira de faturamento, desconto Pix, taxas de cartão e custos</p>
       </div>
 
-      <!-- FILTRO DE DATAS -->
       <div class="section-box">
-        <div class="section-title">📅 Filtrar por Período de Conclusão da O.S.</div>
+        <div class="section-title">📅 Filtrar por Período</div>
         <div class="grid-3" style="align-items: flex-end;">
           <div>
             <label>Data Inicial</label>
@@ -322,40 +361,34 @@
         </div>
       </div>
 
-      <!-- CARDS DE RESUMO FINANCEIRO -->
       <div class="grid-4" style="margin-bottom: 20px;">
         <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 12px; text-align: center;">
           <p style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Faturamento Bruto</p>
           <p id="fin-resumo-bruto" style="font-size: 18px; font-weight: 900; color: #0284c7; margin-top: 4px;">R$ 0,00</p>
-          <span style="font-size: 9px; color: #94a3b8;">Soma Tabela / Peças</span>
         </div>
         <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 12px; text-align: center;">
           <p style="font-size: 10px; font-weight: bold; color: #991b1b; text-transform: uppercase;">Descontos / Taxas Cartão</p>
           <p id="fin-resumo-taxas" style="font-size: 18px; font-weight: 900; color: #dc2626; margin-top: 4px;">R$ 0,00</p>
-          <span style="font-size: 9px; color: #b91c1c;">Desc. Pix + Taxa Maquininha</span>
         </div>
         <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 12px; border-radius: 12px; text-align: center;">
           <p style="font-size: 10px; font-weight: bold; color: #78350f; text-transform: uppercase;">Custos & Comissões</p>
           <p id="fin-resumo-custos" style="font-size: 18px; font-weight: 900; color: #d97706; margin-top: 4px;">R$ 0,00</p>
-          <span style="font-size: 9px; color: #92400e;">Custo Peças + Comissões</span>
         </div>
         <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 12px; text-align: center;">
           <p style="font-size: 10px; font-weight: bold; color: #065f46; text-transform: uppercase;">Lucro Líquido Real</p>
           <p id="fin-resumo-liquido" style="font-size: 20px; font-weight: 900; color: #059669; margin-top: 4px;">R$ 0,00</p>
-          <span style="font-size: 9px; color: #047857;">Sobra Efetiva no Caixa</span>
         </div>
       </div>
 
-      <!-- DETALHAMENTO -->
       <div class="section-box">
-        <div class="section-title">📋 Detalhamento das O.S. Concluídas no Período</div>
+        <div class="section-title">📋 Detalhamento das O.S. Concluídas</div>
         <div id="container-tabela-financeira" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
     </div>
 
   </main>
 
-  <!-- MODAL DE DIAGNÓSTICO -->
+  <!-- MODAL DE DIAGNÓSTICO O.S. -->
   <div id="modal-diagnostico" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
@@ -374,7 +407,6 @@
               <option value="Em Diagnóstico">🔍 Em Diagnóstico</option>
               <option value="Orçamento Enviado">⏳ Orçamento Enviado</option>
               <option value="Aprovado / Em Reparo">🛠️ Aprovado / Em Reparo</option>
-              <option value="Não Aprovado pelo Cliente">❌ Não Aprovado pelo Cliente</option>
               <option value="Pronto para Retirada">✅ Pronto para Retirada</option>
               <option value="Entregue / Concluído">🎉 Entregue / Concluído</option>
               <option value="Cancelado / Sem Conserto">❌ Cancelado / Sem Conserto</option>
@@ -390,70 +422,53 @@
 
         <div>
           <label>Diagnóstico Técnico</label>
-          <textarea id="diag-tecnico" rows="2" placeholder="Ex: Tracionador de papel desgastado..."></textarea>
+          <textarea id="diag-tecnico" rows="2" placeholder="Ex: Defeito encontrado..."></textarea>
         </div>
 
         <div>
           <label>Solução Proposta / Efetuada</label>
-          <textarea id="diag-solucao" rows="2" placeholder="Ex: Substituição de peças..."></textarea>
+          <textarea id="diag-solucao" rows="2" placeholder="Ex: Reparo realizado..."></textarea>
         </div>
 
-        <!-- FORMA DE PAGAMENTO E TAXAS DE CARTÃO -->
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 10px;">
-          <label style="color: #166534; font-size: 12px; font-weight: bold;">💳 Forma de Pagamento / Regra de Taxa e Desconto</label>
-          <select id="diag-forma-pagamento" style="font-weight: bold; margin-top: 5px; color: #0f172a;">
-            <option value="pix_dinheiro">💚 Pix / Dinheiro (5% de Desconto para o Cliente | 0% Taxa)</option>
-            <option value="debito">💳 Cartão de Débito (Taxa de 1,40% para a Loja)</option>
-            <option value="credito_avista">💳 Crédito à Vista (Taxa de 3,42% para a Loja)</option>
-            <option value="credito_2x">💳 Crédito em 2x sem juros (Taxa de 7,19% para a Loja)</option>
-            <option value="outros">💵 Outro (Sem Desconto | Sem Taxa)</option>
+          <label style="color: #166534; font-size: 12px; font-weight: bold;">💳 Forma de Pagamento</label>
+          <select id="diag-forma-pagamento" style="font-weight: bold; margin-top: 5px;">
+            <option value="pix_dinheiro">💚 Pix / Dinheiro (5% de Desconto para o Cliente)</option>
+            <option value="debito">💳 Cartão de Débito (Taxa 1,40%)</option>
+            <option value="credito_avista">💳 Crédito à Vista (Taxa 3,42%)</option>
+            <option value="credito_2x">💳 Crédito em 2x (Taxa 7,19%)</option>
+            <option value="outros">💵 Outro</option>
           </select>
         </div>
 
-        <!-- CARIMBO DE ALERTA DE GARANTIA (CABEÇA DE IMPRESSÃO) -->
         <div style="background: #fef2f2; border: 2px dashed #ef4444; padding: 12px; border-radius: 10px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #b91c1c; font-weight: 900; font-size: 13px;">
-            <input type="checkbox" id="diag-carimbo-cabeca" style="width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer;">
-            🚨 APLICAR CARIMBO: ATENÇÃO LIMPEZA E DESENTUPIMENTO DE CABEÇA SEM GARANTIA
+            <input type="checkbox" id="diag-carimbo-cabeca" style="width: 18px; height: 18px; accent-color: #ef4444;">
+            🚨 APLICAR CARIMBO: LIMPEZA DE CABEÇA SEM GARANTIA
           </label>
-          <p style="font-size: 10px; color: #7f1d1d; margin-top: 4px; margin-left: 26px;">
-            Marca esta opção caso o serviço envolva limpeza/desentupimento de cabeça de impressão ou troca sem tintas originais.
-          </p>
         </div>
 
-        <!-- SELEÇÃO RÁPIDA DE SERVIÇOS CADASTRADOS -->
         <div style="background: #f1f5f9; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1;">
-          <label style="color: #0f172a; margin-bottom: 5px;">⚡ Inserir Serviço Cadastrado (Tabela Padrão)</label>
+          <label style="color: #0f172a; margin-bottom: 5px;">⚡ Inserir Serviço Cadastrado</label>
           <div style="display: flex; gap: 8px;">
             <select id="select-servico-catalogo" style="flex: 1; font-size: 12px;">
-              <option value="">Selecione um serviço da tabela...</option>
+              <option value="">Selecione um serviço...</option>
             </select>
-            <button type="button" onclick="aplicarServicoCatalogo()" class="btn-sm btn-sky" style="padding: 8px 14px;">Inserir na O.S.</button>
+            <button type="button" onclick="aplicarServicoCatalogo()" class="btn-sm btn-sky" style="padding: 8px 14px;">Inserir</button>
           </div>
         </div>
 
         <div>
-          <label>Mão de Obra / Serviço (R$) <span style="font-size: 10px; color: #64748b; font-weight: normal;">(Editável manualmente)</span></label>
+          <label>Mão de Obra / Serviço (R$)</label>
           <input type="number" step="0.01" id="diag-vservico" placeholder="0.00">
         </div>
 
-        <!-- CONTROLE DETALHADO DE PEÇAS -->
         <div class="section-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin: 0; color: #0369a1;">📦 Peças Utilizadas (Custos e Controle)</label>
+            <label style="margin: 0; color: #0369a1;">📦 Peças Utilizadas</label>
             <button type="button" onclick="adicionarLinhaPeca()" class="btn-sm btn-sky">+ Adicionar Peça</button>
           </div>
           <div id="container-pecas-modal" style="display: flex; flex-direction: column; gap: 10px;"></div>
-        </div>
-
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 10px;">
-          <label style="color: #1e40af; display: flex; align-items: center; gap: 5px;">📌 Instruções / Avisos para a Retirada do Cliente</label>
-          <textarea id="diag-instrucoes-retirada" rows="2" placeholder="Ex: Trazer cabo de energia original, testar equipamento no balcão..." style="background: white; margin-top: 5px;"></textarea>
-        </div>
-
-        <div>
-          <label>Notas Internas do Serviço</label>
-          <input type="text" id="diag-notas-serv" placeholder="Ex: Cliente ciente...">
         </div>
       </div>
 
@@ -464,11 +479,149 @@
     </div>
   </div>
 
-  <!-- SCRIPT INTEGRADO COM FIREBASE FIRESTORE E LOGIN -->
+  <!-- MODAL DE CADASTRO/EDIÇÃO DE PRODUTO (ESTOQUE) -->
+  <div id="modal-produto" class="modal-overlay">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 id="titulo-modal-produto" style="font-size: 15px; font-weight: bold;">📦 Cadastrar Produto / SKU</h3>
+        <button onclick="fecharModalProduto()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="hidden" id="prod-doc-id">
+        <div>
+          <label>Código de Barras / SKU *</label>
+          <input type="text" id="prod-sku" required placeholder="Ex: 7891234567890 ou SKU-01">
+        </div>
+        <div>
+          <label>Descrição do Produto *</label>
+          <input type="text" id="prod-nome" required placeholder="Ex: Cartucho HP 664 Preto">
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Preço de Custo (R$)</label>
+            <input type="number" step="0.01" id="prod-custo" placeholder="0.00">
+          </div>
+          <div>
+            <label>Preço de Venda (R$)</label>
+            <input type="number" step="0.01" id="prod-venda" placeholder="0.00">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Estoque Atual</label>
+            <input type="number" id="prod-qtd" value="0" placeholder="0">
+          </div>
+          <div>
+            <label>Estoque Mínimo (Alerta)</label>
+            <input type="number" id="prod-minimo" value="2" placeholder="2">
+          </div>
+        </div>
+        <div>
+          <label>Localização Física</label>
+          <input type="text" id="prod-local" placeholder="Ex: Prateleira A, Gaveta 3">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModalProduto()" class="btn-sm" style="background: #e2e8f0; padding: 8px 16px;">Cancelar</button>
+        <button onclick="salvarProdutoEstoque(event)" class="btn-sm btn-sky" style="padding: 8px 16px;">Salvar Produto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ENTRADA DE MERCADORIA -->
+  <div id="entry-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-size: 15px; font-weight: bold;">📥 Entrada de Mercadoria (Leitor)</h3>
+        <button onclick="fecharModalEntrada()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label>Bipe ou Digite o Código de Barras / SKU *</label>
+          <input type="text" id="entry-barcode" placeholder="Escaneie o código aqui..." autofocus onkeydown="if(event.key==='Enter') processarEntradaEstoque()">
+        </div>
+        <div>
+          <label>Quantidade Entrando *</label>
+          <input type="number" id="entry-qty" value="1" min="1">
+        </div>
+        <div>
+          <label>Observação / Nota Fiscal / Fornecedor</label>
+          <input type="text" id="entry-obs" placeholder="Ex: Compra NF 1234">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModalEntrada()" class="btn-sm" style="background: #e2e8f0; padding: 8px 16px;">Fechar</button>
+        <button onclick="processarEntradaEstoque()" class="btn-sm btn-emerald" style="padding: 8px 16px;">Confirmar Entrada (+)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SAÍDA DE MERCADORIA -->
+  <div id="exit-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-size: 15px; font-weight: bold;">📤 Saída de Mercadoria</h3>
+        <button onclick="fecharModalSaida()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label>Canal / Tipo de Saída *</label>
+          <select id="exit-canal" style="font-weight: bold;">
+            <option value="Venda - TikTok">🛒 Venda - TikTok</option>
+            <option value="Venda - Shopee">🛒 Venda - Shopee</option>
+            <option value="Venda - Mercado Livre">🛒 Venda - Mercado Livre</option>
+            <option value="Venda - Afiliados">🤝 Venda - Afiliados</option>
+            <option value="Venda - Revenda">💼 Venda - Revenda</option>
+            <option value="Baixa de Estoque">⚠️ Baixa de Estoque (Uso / Avaria)</option>
+          </select>
+        </div>
+        <div>
+          <label>Bipe ou Digite o Código de Barras / SKU *</label>
+          <input type="text" id="exit-barcode" placeholder="Escaneie o código aqui..." onkeydown="if(event.key==='Enter') processarSaidaEstoque()">
+        </div>
+        <div>
+          <label>Quantidade Caindo *</label>
+          <input type="number" id="exit-qty" value="1" min="1">
+        </div>
+        <div>
+          <label>Observação / Nº Pedido</label>
+          <input type="text" id="exit-obs" placeholder="Ex: Pedido #9988">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModalSaida()" class="btn-sm" style="background: #e2e8f0; padding: 8px 16px;">Fechar</button>
+        <button onclick="processarSaidaEstoque()" class="btn-sm btn-dark" style="padding: 8px 16px;">Confirmar Saída (-)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE IMPORTAÇÃO DBF / ASCII -->
+  <div id="modal-importar-dbf" class="modal-overlay">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 style="font-size: 15px; font-weight: bold;">📂 Importar Backup Antigo (DBF / ASCII)</h3>
+        <button onclick="fecharModalImportarDBF()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+        <p style="font-size: 12px; color: #64748b;">Selecione o arquivo `.dbf`, `.txt` ou `.asc` gerado pelo seu sistema legado para importar automaticamente para o estoque da PLUG.</p>
+        <div>
+          <label>Arquivo de Backup *</label>
+          <input type="file" id="arquivo-backup" accept=".dbf,.txt,.asc,.csv" style="padding: 8px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModalImportarDBF()" class="btn-sm" style="background: #e2e8f0; padding: 8px 16px;">Cancelar</button>
+        <button onclick="executarImportacaoBackup()" class="btn-sm btn-purple" style="padding: 8px 16px;">Processar Importação</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT INTEGRADO COM FIREBASE E LÓGICA COMPLETA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    // Credenciais oficiais do projeto PLUG Informática
     const firebaseConfig = {
       apiKey: "AIzaSyDqU3G1Myg9rjoy0tYOoZZGGdY8rjukUZ0",
       authDomain: "controle-os-plug.firebaseapp.com",
@@ -485,40 +638,40 @@
     window.listaOS = [];
     window.listaColaboradores = [];
     window.tabelaServicos = [];
+    window.listaEstoque = [];
+    window.listaHistoricoMov = [];
     window.usuarioLogado = null;
 
     // SINCRONIZAÇÃO EM TEMPO REAL COM O FIRESTORE
     onSnapshot(collection(db, "plug_os"), (snapshot) => {
       window.listaOS = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
-      if (document.getElementById('aba-lista-os') && !document.getElementById('aba-lista-os').classList.contains('hidden')) {
-        renderizarListaOS();
-      }
-      if (document.getElementById('aba-comissoes') && !document.getElementById('aba-comissoes').classList.contains('hidden')) {
-        renderizarRelatorioComissoes();
-      }
-      if (document.getElementById('aba-financeiro') && !document.getElementById('aba-financeiro').classList.contains('hidden')) {
-        renderizarRelatorioFinanceiro();
-      }
+      atualizarTelasAtivas();
     });
 
     onSnapshot(collection(db, "plug_colaboradores"), (snapshot) => {
       window.listaColaboradores = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
       atualizarSelectsColaboradores();
       atualizarSelectLogin();
-      if (document.getElementById('aba-colaboradores') && !document.getElementById('aba-colaboradores').classList.contains('hidden')) {
-        renderizarListaColaboradores();
-      }
+      renderizarListaColaboradores();
     });
 
     onSnapshot(collection(db, "plug_tabela_servicos"), (snapshot) => {
       window.tabelaServicos = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
-      if (document.getElementById('aba-colaboradores') && !document.getElementById('aba-colaboradores').classList.contains('hidden')) {
-        renderizarTabelaServicos();
-      }
+      renderizarTabelaServicos();
+    });
+
+    onSnapshot(collection(db, "plug_estoque"), (snapshot) => {
+      window.listaEstoque = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      renderizarTabelaEstoque();
+      atualizarFiltrosLocalizacao();
+    });
+
+    onSnapshot(collection(db, "plug_movimentacoes"), (snapshot) => {
+      window.listaHistoricoMov = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      renderizarHistoricoMovimentacoes();
     });
 
     window.onload = function() {
-      // Verificar se há sessão salva no navegador
       let sessaoSalva = localStorage.getItem('plug_usuario_logado');
       if (sessaoSalva) {
         window.usuarioLogado = JSON.parse(sessaoSalva);
@@ -526,11 +679,17 @@
       }
     };
 
+    function atualizarTelasAtivas() {
+      if (!document.getElementById('aba-lista-os').classList.contains('hidden')) renderizarListaOS();
+      if (!document.getElementById('aba-comissoes').classList.contains('hidden')) renderizarRelatorioComissoes();
+      if (!document.getElementById('aba-financeiro').classList.contains('hidden')) renderizarRelatorioFinanceiro();
+    }
+
     function atualizarSelectLogin() {
       const selectLogin = document.getElementById('login-usuario');
       if (!selectLogin) return;
       if (window.listaColaboradores.length === 0) {
-        selectLogin.innerHTML = '<option value="">Nenhum usuário cadastrado (Cadastre no banco ou abra como Admin)</option>';
+        selectLogin.innerHTML = '<option value="">Nenhum usuário cadastrado</option>';
         return;
       }
       selectLogin.innerHTML = '<option value="">Selecione seu nome...</option>' + 
@@ -544,11 +703,7 @@
 
       let colaborador = window.listaColaboradores.find(c => c.nome === nomeSelecionado);
       if (!colaborador) return alert("Usuário não encontrado.");
-
-      // Se o usuário ainda não tiver senha cadastrada no banco, define a senha digitada
-      if (!colaborador.senha) {
-        colaborador.senha = "123456"; // senha padrão inicial se estiver vazia
-      }
+      if (!colaborador.senha) colaborador.senha = "123456";
 
       if (colaborador.senha !== senhaDigitada) {
         return alert("❌ Senha incorreta! Tente novamente.");
@@ -575,14 +730,10 @@
       let btnColab = document.getElementById('btn-aba-colab');
 
       if (window.usuarioLogado.cargo === 'Técnico') {
-        // Técnico NÃO vê Lucratividade
         if (btnFinanceiro) btnFinanceiro.style.display = 'none';
         if (btnColab) btnColab.style.display = 'none';
-        
-        // Abre direto na aba de comissões (filtrada para o próprio técnico)
         mostrarAba('comissoes');
       } else {
-        // Atendente ou Gestor vê tudo
         if (btnFinanceiro) btnFinanceiro.style.display = 'inline-block';
         if (btnColab) btnColab.style.display = 'inline-block';
         mostrarAba('nova-os');
@@ -601,12 +752,10 @@
         selectAtendente.innerHTML = '<option value="">Selecione o Atendente...</option>' + 
           atendentes.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
       }
-
       if (selectTecnicoModal) {
         selectTecnicoModal.innerHTML = '<option value="">Selecione o Técnico...</option>' + 
           tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
       }
-
       if (filtroComissao) {
         if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') {
           filtroComissao.innerHTML = `<option value="${window.usuarioLogado.nome}">${window.usuarioLogado.nome}</option>`;
@@ -625,7 +774,7 @@
         return;
       }
 
-      const abasIds = ['aba-nova-os', 'aba-lista-os', 'aba-colaboradores', 'aba-comissoes', 'aba-financeiro'];
+      const abasIds = ['aba-nova-os', 'aba-lista-os', 'aba-estoque', 'aba-historico-mov', 'aba-colaboradores', 'aba-comissoes', 'aba-financeiro'];
       abasIds.forEach(id => {
         let el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -637,6 +786,8 @@
       const botoes = {
         'nova-os': 'btn-aba-nova',
         'lista-os': 'btn-aba-lista',
+        'estoque': 'btn-aba-est',
+        'historico-mov': 'btn-aba-hist',
         'colaboradores': 'btn-aba-colab',
         'comissoes': 'btn-aba-comiss',
         'financeiro': 'btn-aba-fin'
@@ -650,22 +801,288 @@
       let btnAtivo = document.getElementById(botoes[aba]);
       if (btnAtivo) btnAtivo.classList.add('active');
 
-      if (aba === 'lista-os') {
-        renderizarListaOS();
-      } else if (aba === 'colaboradores') {
-        renderizarListaColaboradores();
-        renderizarTabelaServicos();
-      } else if (aba === 'comissoes') {
-        renderizarRelatorioComissoes();
-      } else if (aba === 'financeiro') {
-        renderizarRelatorioFinanceiro();
+      if (aba === 'lista-os') renderizarListaOS();
+      else if (aba === 'estoque') renderizarTabelaEstoque();
+      else if (aba === 'historico-mov') renderizarHistoricoMovimentacoes();
+      else if (aba === 'colaboradores') { renderizarListaColaboradores(); renderizarTabelaServicos(); }
+      else if (aba === 'comissoes') renderizarRelatorioComissoes();
+      else if (aba === 'financeiro') renderizarRelatorioFinanceiro();
+    };
+
+    // --- ESTOQUE E SKU ---
+    window.abrirModalProduto = function(idDoc = null) {
+      document.getElementById('prod-doc-id').value = '';
+      document.getElementById('prod-sku').value = '';
+      document.getElementById('prod-nome').value = '';
+      document.getElementById('prod-custo').value = '';
+      document.getElementById('prod-venda').value = '';
+      document.getElementById('prod-qtd').value = '0';
+      document.getElementById('prod-minimo').value = '2';
+      document.getElementById('prod-local').value = '';
+      document.getElementById('titulo-modal-produto').innerText = '📦 Cadastrar Produto / SKU';
+
+      if (idDoc) {
+        let p = window.listaEstoque.find(x => x.idDoc === idDoc);
+        if (p) {
+          document.getElementById('prod-doc-id').value = p.idDoc;
+          document.getElementById('prod-sku').value = p.sku || '';
+          document.getElementById('prod-nome').value = p.nome || '';
+          document.getElementById('prod-custo').value = p.custo || 0;
+          document.getElementById('prod-venda').value = p.venda || 0;
+          document.getElementById('prod-qtd').value = p.quantidade || 0;
+          document.getElementById('prod-minimo').value = p.minimo || 2;
+          document.getElementById('prod-local').value = p.local || '';
+          document.getElementById('titulo-modal-produto').innerText = '✏️ Editar Produto / SKU';
+        }
+      }
+      document.getElementById('modal-produto').style.display = 'flex';
+    };
+
+    window.fecharModalProduto = function() { document.getElementById('modal-produto').style.display = 'none'; };
+
+    window.salvarProdutoEstoque = async function(e) {
+      e.preventDefault();
+      let docId = document.getElementById('prod-doc-id').value;
+      let dados = {
+        sku: document.getElementById('prod-sku').value.trim(),
+        nome: document.getElementById('prod-nome').value.trim(),
+        custo: parseFloat(document.getElementById('prod-custo').value) || 0,
+        venda: parseFloat(document.getElementById('prod-venda').value) || 0,
+        quantidade: parseInt(document.getElementById('prod-qtd').value) || 0,
+        minimo: parseInt(document.getElementById('prod-minimo').value) || 2,
+        local: document.getElementById('prod-local').value.trim() || 'Geral'
+      };
+
+      if (docId) {
+        await updateDoc(doc(db, "plug_estoque", docId), dados);
+        alert("✅ Produto atualizado com sucesso!");
+      } else {
+        await addDoc(collection(db, "plug_estoque"), dados);
+        alert("✅ Produto cadastrado com sucesso!");
+      }
+      fecharModalProduto();
+    };
+
+    window.renderizarTabelaEstoque = function() {
+      let container = document.getElementById('container-tabela-estoque');
+      if (!container) return;
+      let busca = (document.getElementById('busca-estoque')?.value || '').toLowerCase();
+      let filtroLocal = document.getElementById('filtro-local-estoque')?.value || 'todos';
+
+      let filtrados = window.listaEstoque;
+      if (filtroLocal !== 'todos') filtrados = filtrados.filter(p => p.local === filtroLocal);
+      if (busca) {
+        filtrados = filtrados.filter(p => p.sku.toLowerCase().includes(busca) || p.nome.toLowerCase().includes(busca));
+      }
+
+      if (filtrados.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhum produto cadastrado no estoque.</div>`;
+        return;
+      }
+
+      let adminOcultaPrecos = (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico');
+
+      container.innerHTML = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <thead>
+            <tr style="background: #0f172a; color: white; text-align: left;">
+              <th style="padding: 10px;">SKU / Código</th>
+              <th style="padding: 10px;">Descrição</th>
+              <th style="padding: 10px;">Local</th>
+              <th style="padding: 10px; text-align: center;">Qtd</th>
+              ${!adminOcultaPrecos ? '<th style="padding: 10px; text-align: right;">Custo</th><th style="padding: 10px; text-align: right;">Venda</th>' : ''}
+              <th style="padding: 10px; text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtrados.map(p => {
+              let alertaBaixo = p.quantidade <= (p.minimo || 2) ? 'background: #fef2f2; color: #991b1b; font-weight: bold;' : '';
+              return `
+                <tr style="border-bottom: 1px solid #e2e8f0; ${alertaBaixo}">
+                  <td style="padding: 10px; font-weight: bold;">${p.sku}</td>
+                  <td style="padding: 10px;">${p.nome}</td>
+                  <td style="padding: 10px;">${p.local || 'Geral'}</td>
+                  <td style="padding: 10px; text-align: center; font-weight: 900; font-size: 14px;">${p.quantidade}</td>
+                  ${!adminOcultaPrecos ? `<td style="padding: 10px; text-align: right;">R$ ${(p.custo||0).toFixed(2)}</td><td style="padding: 10px; text-align: right; color: #059669; font-weight: bold;">R$ ${(p.venda||0).toFixed(2)}</td>` : ''}
+                  <td style="padding: 10px; text-align: center; display: flex; gap: 6px; justify-content: center;">
+                    <button onclick="abrirModalProduto('${p.idDoc}')" class="btn-sm btn-sky" style="padding: 4px 8px;">✏️</button>
+                    <button onclick="excluirProdutoEstoque('${p.idDoc}')" class="btn-sm btn-red" style="padding: 4px 8px;">🗑️</button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    };
+
+    window.excluirProdutoEstoque = async function(idDoc) {
+      if (confirm("Deseja excluir este produto do estoque?")) {
+        await deleteDoc(doc(db, "plug_estoque", idDoc));
       }
     };
 
-    // CADASTRO DE COLABORADORES
+    function atualizarFiltrosLocalizacao() {
+      let sel = document.getElementById('filtro-local-estoque');
+      if (!sel) return;
+      let locais = [...new Set(window.listaEstoque.map(p => p.local || 'Geral'))];
+      sel.innerHTML = '<option value="todos">Todas as Localizações</option>' + locais.map(l => `<option value="${l}">${l}</option>`).join('');
+    }
+
+    // --- ENTRADA E SAÍDA RÁPIDA ---
+    window.abrirModalEntrada = function() { document.getElementById('entry-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('entry-barcode').focus(), 100); };
+    window.fecharModalEntrada = function() { document.getElementById('entry-modal').style.display = 'none'; };
+
+    window.processarEntradaEstoque = async function() {
+      let barcode = document.getElementById('entry-barcode').value.trim();
+      let qtd = parseInt(document.getElementById('entry-qty').value) || 1;
+      let obs = document.getElementById('entry-obs').value.trim();
+      if (!barcode) return alert("Informe o código de barras ou SKU.");
+
+      let produto = window.listaEstoque.find(p => p.sku === barcode);
+      if (!produto) {
+        if (confirm("Produto não encontrado no cadastro. Deseja cadastrá-lo agora?")) {
+          abrirModalProduto();
+          document.getElementById('prod-sku').value = barcode;
+          fecharModalEntrada();
+        }
+        return;
+      }
+
+      let novaQtd = (produto.quantidade || 0) + qtd;
+      await updateDoc(doc(db, "plug_estoque", produto.idDoc), { quantidade: novaQtd });
+      
+      await addDoc(collection(db, "plug_movimentacoes"), {
+        tipo: "ENTRADA",
+        sku: produto.sku,
+        nome: produto.nome,
+        quantidade: qtd,
+        canal: "Entrada de Estoque",
+        obs: obs || 'Reposição',
+        responsavel: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+        data: new Date().toISOString()
+      });
+
+      alert(`✅ Entrada de ${qtd} un. registrada para ${produto.nome}! Novo saldo: ${novaQtd}`);
+      document.getElementById('entry-barcode').value = '';
+      document.getElementById('entry-obs').value = '';
+      fecharModalEntrada();
+    };
+
+    window.abrirModalSaida = function() { document.getElementById('exit-modal').style.display = 'flex'; setTimeout(()=>document.getElementById('exit-barcode').focus(), 100); };
+    window.fecharModalSaida = function() { document.getElementById('exit-modal').style.display = 'none'; };
+
+    window.processarSaidaEstoque = async function() {
+      let barcode = document.getElementById('exit-barcode').value.trim();
+      let qtd = parseInt(document.getElementById('exit-qty').value) || 1;
+      let canal = document.getElementById('exit-canal').value;
+      let obs = document.getElementById('exit-obs').value.trim();
+      if (!barcode) return alert("Informe o código de barras ou SKU.");
+
+      let produto = window.listaEstoque.find(p => p.sku === barcode);
+      if (!produto) return alert("❌ Produto não encontrado com este SKU / Código de Barras!");
+
+      if ((produto.quantidade || 0) < qtd) {
+        return alert(`❌ Saldo insuficiente! Estoque atual: ${produto.quantidade} un.`);
+      }
+
+      let novaQtd = produto.quantidade - qtd;
+      await updateDoc(doc(db, "plug_estoque", produto.idDoc), { quantidade: novaQtd });
+
+      await addDoc(collection(db, "plug_movimentacoes"), {
+        tipo: "SAÍDA",
+        sku: produto.sku,
+        nome: produto.nome,
+        quantidade: qtd,
+        canal: canal,
+        obs: obs || 'Venda / Baixa',
+        responsavel: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+        data: new Date().toISOString()
+      });
+
+      alert(`✅ Saída de ${qtd} un. (${canal}) registrada com sucesso! Saldo restante: ${novaQtd}`);
+      document.getElementById('exit-barcode').value = '';
+      document.getElementById('exit-obs').value = '';
+      fecharModalSaida();
+    };
+
+    window.renderizarHistoricoMovimentacoes = function() {
+      let container = document.getElementById('container-historico-mov');
+      if (!container) return;
+      let filtroCanal = document.getElementById('filtro-canal-rel')?.value || 'todos';
+
+      let filtradas = window.listaHistoricoMov;
+      if (filtroCanal !== 'todos') filtradas = filtradas.filter(m => m.canal === filtroCanal);
+
+      if (filtradas.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhuma movimentação registrada.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtradas.sort((a,b) => new Date(b.data) - new Date(a.data)).map(m => {
+        let dt = new Date(m.data).toLocaleString('pt-BR');
+        let corTipo = m.tipo === 'ENTRADA' ? '#059669' : '#dc2626';
+        return `
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span style="font-weight: bold; color: ${corTipo};">${m.tipo} [${m.canal}]</span> - <strong>${m.nome}</strong> (SKU: ${m.sku})
+              <div style="color: #64748b; font-size: 11px; margin-top: 2px;">Qtd: <strong>${m.quantidade}</strong> | Obs: ${m.obs || 'N/A'} | Resp: ${m.responsavel || 'N/A'}</div>
+            </div>
+            <div style="color: #94a3b8; font-size: 11px;">${dt}</div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    // --- IMPORTADOR DBF / ASCII ---
+    window.abrirModalImportarDBF = function() { document.getElementById('modal-importar-dbf').style.display = 'flex'; };
+    window.fecharModalImportarDBF = function() { document.getElementById('modal-importar-dbf').style.display = 'none'; };
+
+    window.executarImportacaoBackup = async function() {
+      let fileInput = document.getElementById('arquivo-backup');
+      if (fileInput.files.length === 0) return alert("Selecione um arquivo de backup.");
+      let file = fileInput.files[0];
+      let reader = new FileReader();
+
+      reader.onload = async function(e) {
+        let conteudo = e.target.result;
+        let linhas = conteudo.split(/\r\n|\n/);
+        let importados = 0;
+
+        for (let i = 0; i < linhas.length; i++) {
+          let linha = linhas[i].trim();
+          if (!linha) continue;
+          let partes = linha.split(/,|;|\||\t/);
+          if (partes.length >= 2) {
+            let sku = partes[0].replace(/['"]/g, '').trim();
+            let nome = partes[1].replace(/['"]/g, '').trim();
+            let qtd = parseInt(partes[2]) || 1;
+            let preco = parseFloat(partes[3]) || 0;
+
+            if (sku && nome) {
+              await addDoc(collection(db, "plug_estoque"), {
+                sku: sku,
+                nome: nome,
+                quantidade: qtd,
+                venda: preco,
+                custo: preco * 0.7,
+                minimo: 2,
+                local: 'Importado Backup'
+              });
+              importados++;
+            }
+          }
+        }
+        alert(`✅ Importação concluída! ${importados} produtos foram adicionados ao estoque.`);
+        fecharModalImportarDBF();
+      };
+      reader.readAsText(file, 'ISO-8859-1');
+    };
+
+    // --- ORDEM DE SERVIÇO (O.S.) ---
     window.salvarColaborador = async function(e) {
       e.preventDefault();
-      const novo = {
+      let novo = {
         id: "COLAB-" + Date.now(),
         nome: document.getElementById('colab-nome').value.trim(),
         cargo: document.getElementById('colab-cargo').value,
@@ -674,7 +1091,7 @@
       };
       await addDoc(collection(db, "plug_colaboradores"), novo);
       e.target.reset();
-      alert("✅ Colaborador/Usuário cadastrado com sucesso!");
+      alert("✅ Colaborador cadastrado com sucesso!");
     };
 
     window.renderizarListaColaboradores = function() {
@@ -686,19 +1103,14 @@
       }
       container.innerHTML = window.listaColaboradores.map(c => `
         <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; font-size: 11px;">
-          <div>
-            <strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%) [Senha: ••••••]
-          </div>
+          <div><strong>${c.nome}</strong> (${c.cargo} - ${c.comissao}%)</div>
           <button onclick="excluirColaborador('${c.idDoc}')" class="btn-sm btn-red" style="padding: 2px 6px;">🗑️</button>
         </div>
       `).join('');
     };
 
-    window.excluirColaborador = async function(idDoc) {
-      await deleteDoc(doc(db, "plug_colaboradores", idDoc));
-    };
+    window.excluirColaborador = async function(idDoc) { await deleteDoc(doc(db, "plug_colaboradores", idDoc)); };
 
-    // TABELA DE VALORES DE SERVIÇOS
     window.salvarTabelaServico = async function(e) {
       e.preventDefault();
       let novoServ = {
@@ -727,14 +1139,12 @@
       `).join('');
     };
 
-    window.excluirTabelaServico = async function(idDoc) {
-      await deleteDoc(doc(db, "plug_tabela_servicos", idDoc));
-    };
+    window.excluirTabelaServico = async function(idDoc) { await deleteDoc(doc(db, "plug_tabela_servicos", idDoc)); };
 
     window.aplicarServicoCatalogo = function() {
       let select = document.getElementById('select-servico-catalogo');
       let servId = select.value;
-      if (!servId) return alert("Selecione um serviço da lista.");
+      if (!servId) return alert("Selecione um serviço.");
       let serv = window.tabelaServicos.find(s => s.id === servId);
       if (serv) {
         document.getElementById('diag-vservico').value = serv.valor.toFixed(2);
@@ -743,327 +1153,91 @@
       }
     };
 
-    // CÁLCULO DE COMISSÃO POR O.S.
     function calcularComissaoOS(os, colab) {
       let vServ = parseFloat(os.valorServico) || 0;
-      let pecas = os.pecas || [];
       let ganho = 0;
-
-      if (colab.cargo === 'Atendente de Balcão') {
-        if (os.atendente === colab.nome) {
-          ganho = (vServ * colab.comissao) / 100;
-        }
-      } else if (colab.cargo === 'Técnico' || colab.cargo === 'Administrador / Gestor') {
-        if (os.tecnico === colab.nome) {
-          let comissaoPct = colab.comissao / 100;
-          let lucroPecasCompradas = 0;
-          let valorPecasTecnicoOpcaoA = 0;
-          let valorPecasTecnicoOpcaoB = 0;
-
-          pecas.forEach(p => {
-            let vVenda = parseFloat(p.venda) || 0;
-            let vCusto = parseFloat(p.custo) || 0;
-            let origem = p.origem || 'Em Estoque';
-            let regraTec = p.regraTecnico || 'opcaoA';
-
-            if (origem === 'Comprada / Encomenda') {
-              lucroPecasCompradas += (vVenda - vCusto);
-            } else if (origem === 'Peça fornecida pelo técnico') {
-              if (regraTec === 'opcaoB') {
-                valorPecasTecnicoOpcaoB += vVenda;
-              } else {
-                valorPecasTecnicoOpcaoA += vVenda;
-              }
-            }
-          });
-
-          if (valorPecasTecnicoOpcaoB > 0) {
-            ganho = (valorPecasTecnicoOpcaoB + vServ) / 2;
-          } else {
-            let baseComissao = lucroPecasCompradas + vServ;
-            ganho = (baseComissao * comissaoPct) + valorPecasTecnicoOpcaoA;
-          }
-        }
+      if (colab.cargo === 'Atendente de Balcão' && os.atendente === colab.nome) {
+        ganho = (vServ * colab.comissao) / 100;
+      } else if ((colab.cargo === 'Técnico' || colab.cargo === 'Administrador / Gestor') && os.tecnico === colab.nome) {
+        ganho = (vServ * colab.comissao) / 100;
       }
       return ganho;
     }
 
-    // CÁLCULO DE TAXAS E DESCONTOS DA O.S.
     function calcularTaxasEValoresOS(os) {
       let vServ = parseFloat(os.valorServico) || 0;
-      let pecas = os.pecas || [];
-      let subtotalPecasVenda = 0;
-      let subtotalPecasCusto = 0;
-
-      pecas.forEach(p => {
-        if (p.origem !== 'O cliente trouxe a peça') {
-          subtotalPecasVenda += parseFloat(p.venda) || 0;
-          subtotalPecasCusto += parseFloat(p.custo) || 0;
-        }
-      });
-
-      let valorBrutoInicial = subtotalPecasVenda + vServ;
+      let subtotalPecas = (os.pecas || []).reduce((acc, p) => acc + (parseFloat(p.venda) || 0), 0);
+      let valorBruto = subtotalPecas + vServ;
       let descontoPix = 0;
-      let taxaCartaoMoeda = 0;
-      let valorFinalCliente = valorBrutoInicial;
+      let taxaCartao = 0;
+      let valorFinal = valorBruto;
       let formaPag = os.formaPagamento || 'pix_dinheiro';
 
       if (formaPag === 'pix_dinheiro') {
-        descontoPix = valorBrutoInicial * 0.05;
-        valorFinalCliente = valorBrutoInicial - descontoPix;
-      } else if (formaPag === 'debito') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.014;
-      } else if (formaPag === 'credito_avista') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.0342;
-      } else if (formaPag === 'credito_2x') {
-        taxaCartaoMoeda = valorBrutoInicial * 0.0719;
-      }
+        descontoPix = valorBruto * 0.05;
+        valorFinal = valorBruto - descontoPix;
+      } else if (formaPag === 'debito') taxaCartao = valorBruto * 0.014;
+      else if (formaPag === 'credito_avista') taxaCartao = valorBruto * 0.0342;
+      else if (formaPag === 'credito_2x') taxaCartao = valorBruto * 0.0719;
 
-      return {
-        valorBrutoInicial,
-        descontoPix,
-        taxaCartaoMoeda,
-        valorFinalCliente,
-        subtotalPecasCusto
-      };
+      return { valorBrutoInicial: valorBruto, descontoPix, taxaCartaoMoeda: taxaCartao, valorFinalCliente: valorFinal, subtotalPecasCusto: subtotalPecas };
     }
 
-    // RELATÓRIO DE COMISSÕES (Restrito ao próprio técnico se for técnico)
     window.renderizarRelatorioComissoes = function() {
       const container = document.getElementById('container-relatorio-comissoes');
       if (!container) return;
       let osConcluidas = window.listaOS.filter(os => os.status === 'Entregue / Concluído');
-
       if (osConcluidas.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhuma O.S. concluída para cálculo de comissão.</div>`;
+        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b;">Nenhuma O.S. concluída.</div>`;
         return;
       }
+      let alvos = (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') ? 
+        window.listaColaboradores.filter(c => c.nome === window.usuarioLogado.nome) : window.listaColaboradores;
 
-      let alvos = [];
-      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') {
-        alvos = window.listaColaboradores.filter(c => c.nome === window.usuarioLogado.nome);
-        document.getElementById('titulo-comissao-pagina').innerText = `💵 Minhas Comissões - ${window.usuarioLogado.nome}`;
-      } else {
-        let filtroColab = document.getElementById('filtro-colab-comissao').value;
-        alvos = filtroColab === 'todos' ? window.listaColaboradores : window.listaColaboradores.filter(c => c.nome === filtroColab);
-        document.getElementById('titulo-comissao-pagina').innerText = `💵 Relatório e Acerto de Comissões`;
-      }
-
-      if (alvos.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhum colaborador encontrado para exibição.</div>`;
-        return;
-      }
-
-      let html = '';
-
-      alvos.forEach(colab => {
+      container.innerHTML = alvos.map(colab => {
         let minhasOS = osConcluidas.filter(os => os.atendente === colab.nome || os.tecnico === colab.nome);
-        let totalGanhoColab = 0;
-
-        let detalhes = minhasOS.map(os => {
-          let vServ = parseFloat(os.valorServico) || 0;
-          let pecas = os.pecas || [];
-          let ganhoOS = calcularComissaoOS(os, colab);
-          let explicacaoCalc = [];
-
-          if (colab.cargo === 'Atendente de Balcão') {
-            explicacaoCalc.push(`Atendente (${colab.comissao}% do serviço R$ ${vServ.toFixed(2)})`);
-          } else {
-            let lucroPecasCompradas = 0;
-            let valorPecasTecnicoOpcaoA = 0;
-            let valorPecasTecnicoOpcaoB = 0;
-            pecas.forEach(p => {
-              let vVenda = parseFloat(p.venda) || 0;
-              let vCusto = parseFloat(p.custo) || 0;
-              let origem = p.origem || 'Em Estoque';
-              let regraTec = p.regraTecnico || 'opcaoA';
-              if (origem === 'Comprada / Encomenda') lucroPecasCompradas += (vVenda - vCusto);
-              else if (origem === 'Peça fornecida pelo técnico') {
-                if (regraTec === 'opcaoB') valorPecasTecnicoOpcaoB += vVenda;
-                else valorPecasTecnicoOpcaoA += vVenda;
-              }
-            });
-            if (valorPecasTecnicoOpcaoB > 0) explicacaoCalc.push(`Repasse 50/50 (Peça R$ ${valorPecasTecnicoOpcaoB.toFixed(2)} + Serviço R$ ${vServ.toFixed(2)})`);
-            else {
-              if (lucroPecasCompradas > 0) explicacaoCalc.push(`Lucro Peças: R$ ${lucroPecasCompradas.toFixed(2)}`);
-              explicacaoCalc.push(`Serviço: R$ ${vServ.toFixed(2)} (${colab.comissao}%)`);
-              if (valorPecasTecnicoOpcaoA > 0) explicacaoCalc.push(`Peça Técnico (100%): R$ ${valorPecasTecnicoOpcaoA.toFixed(2)}`);
-            }
-          }
-
-          totalGanhoColab += ganhoOS;
-          let statusPg = os.comissaoPaga ? '✅ Pago' : '⏳ Pendente';
-          let botaoStatusHtml = (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') ? 
-            `<span style="font-weight: bold; background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}; padding: 4px 10px; border-radius: 6px;">${statusPg}</span>` : 
-            `<button onclick="alternarStatusComissao('${os.idDoc}')" class="btn-sm" style="background: ${os.comissaoPaga ? '#d1fae5; color: #065f46' : '#fef3c7; color: #92400e'}">${statusPg}</button>`;
-
-          return `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 5px;">
-              <div>
-                <strong>${os.id}</strong> - ${os.cliente.nome} 
-                <span style="color: #64748b; font-size: 10px; margin-left: 5px;">[${explicacaoCalc.join(' | ')}]</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-weight: bold; color: #059669;">A Receber: R$ ${ganhoOS.toFixed(2)}</span>
-                ${botaoStatusHtml}
-              </div>
-            </div>
-          `;
-        }).join('') || '<p style="font-size: 11px; color: #94a3b8; font-style: italic;">Nenhum serviço registrado.</p>';
-
-        html += `
+        let total = minhasOS.reduce((acc, os) => acc + calcularComissaoOS(os, colab), 0);
+        return `
           <div class="section-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
-              <strong>${colab.nome} <span style="color: #0284c7; font-size: 11px;">(${colab.cargo} - ${colab.comissao}%)</span></strong>
-              <span style="font-size: 14px; font-weight: 900; color: #059669;">Total: R$ ${totalGanhoColab.toFixed(2)}</span>
-            </div>
-            ${detalhes}
+            <strong>${colab.nome} (${colab.cargo} - ${colab.comissao}%)</strong> - Total Comissões: <strong style="color: #059669;">R$ ${total.toFixed(2)}</strong>
           </div>
         `;
-      });
-      container.innerHTML = html;
+      }).join('');
     };
 
-    // RELATÓRIO FINANCEIRO E LUCRATIVIDADE POR DATA
     window.renderizarRelatorioFinanceiro = function() {
       if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') return;
-
-      let dataInicio = document.getElementById('fin-data-inicio')?.value;
-      let dataFim = document.getElementById('fin-data-fim')?.value;
       let containerTabela = document.getElementById('container-tabela-financeira');
       if (!containerTabela) return;
-
       let osConcluidas = window.listaOS.filter(os => os.status === 'Entregue / Concluído');
 
-      if (dataInicio || dataFim) {
-        osConcluidas = osConcluidas.filter(os => {
-          let dataOS = os.dataEntrada.split('T')[0];
-          if (dataInicio && dataOS < dataInicio) return false;
-          if (dataFim && dataOS > dataFim) return false;
-          return true;
-        });
-      }
-
-      if (osConcluidas.length === 0) {
-        containerTabela.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">Nenhuma O.S. concluída encontrada no período selecionado.</div>`;
-        document.getElementById('fin-resumo-bruto').innerText = 'R$ 0,00';
-        document.getElementById('fin-resumo-taxas').innerText = 'R$ 0,00';
-        document.getElementById('fin-resumo-custos').innerText = 'R$ 0,00';
-        document.getElementById('fin-resumo-liquido').innerText = 'R$ 0,00';
-        return;
-      }
-
-      let totalBrutoGeral = 0;
-      let totalDescontosETaxasGeral = 0;
-      let totalCustoPecasGeral = 0;
-      let totalComissoesGeral = 0;
-      let totalLucroLiquidoGeral = 0;
-
-      let htmlTabela = osConcluidas.map(os => {
-        let dt = new Date(os.dataEntrada).toLocaleDateString('pt-BR');
+      let bruto = 0, taxas = 0, custos = 0, liquido = 0;
+      containerTabela.innerHTML = osConcluidas.map(os => {
         let calc = calcularTaxasEValoresOS(os);
-
-        let comissaoOS = 0;
-        window.listaColaboradores.forEach(colab => {
-          comissaoOS += calcularComissaoOS(os, colab);
-        });
-
-        let descontoOuTaxa = calc.descontoPix + calc.taxaCartaoMoeda;
-        let lucroLiquidoOS = calc.valorFinalCliente - calc.subtotalPecasCusto - comissaoOS - calc.taxaCartaoMoeda;
-
-        totalBrutoGeral += calc.valorBrutoInicial;
-        totalDescontosETaxasGeral += descontoOuTaxa;
-        totalCustoPecasGeral += calc.subtotalPecasCusto;
-        totalComissoesGeral += comissaoOS;
-        totalLucroLiquidoGeral += lucroLiquidoOS;
-
-        let rotuloPagamento = {
-          'pix_dinheiro': '💚 Pix/Dinheiro (-5%)',
-          'debito': '💳 Débito (1,40%)',
-          'credito_avista': '💳 Crédito à Vista (3,42%)',
-          'credito_2x': '💳 Crédito 2x (7,19%)',
-          'outros': '💵 Outros'
-        }[os.formaPagamento || 'pix_dinheiro'];
-
+        bruto += calc.valorBrutoInicial;
+        taxas += calc.descontoPix + calc.taxaCartaoMoeda;
+        liquido += calc.valorFinalCliente;
         return `
-          <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <strong>${os.id}</strong> (${dt}) - Cliente: <strong>${os.cliente.nome}</strong>
-              <div style="color: #64748b; margin-top: 2px;">Pagamento: <strong>${rotuloPagamento}</strong> | Técnico: ${os.tecnico || 'N/A'}</div>
-            </div>
-            <div style="display: flex; gap: 12px; align-items: center; text-align: right;">
-              <div>
-                <span style="color: #64748b; font-size: 10px; display: block;">Cobrado</span>
-                <strong style="color: #0284c7;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
-              </div>
-              <div>
-                <span style="color: #64748b; font-size: 10px; display: block;">Desc / Taxa</span>
-                <span style="color: #dc2626;">R$ ${descontoOuTaxa.toFixed(2)}</span>
-              </div>
-              <div>
-                <span style="color: #64748b; font-size: 10px; display: block;">Custo Peças</span>
-                <span style="color: #d97706;">R$ ${calc.subtotalPecasCusto.toFixed(2)}</span>
-              </div>
-              <div>
-                <span style="color: #64748b; font-size: 10px; display: block;">Comissões</span>
-                <span style="color: #b91c1c;">R$ ${comissaoOS.toFixed(2)}</span>
-              </div>
-              <div>
-                <span style="color: #64748b; font-size: 10px; display: block;">Lucro Líquido</span>
-                <strong style="color: #059669; font-size: 13px;">R$ ${lucroLiquidoOS.toFixed(2)}</strong>
-              </div>
-            </div>
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 11px; display: flex; justify-content: space-between;">
+            <span><strong>${os.id}</strong> - ${os.cliente.nome}</span>
+            <strong style="color: #059669;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
           </div>
         `;
       }).join('');
 
-      let totalCustosEComissoes = totalCustoPecasGeral + totalComissoesGeral;
-
-      document.getElementById('fin-resumo-bruto').innerText = `R$ ${totalBrutoGeral.toFixed(2)}`;
-      document.getElementById('fin-resumo-taxas').innerText = `R$ ${totalDescontosETaxasGeral.toFixed(2)}`;
-      document.getElementById('fin-resumo-custos').innerText = `R$ ${totalCustosEComissoes.toFixed(2)}`;
-      document.getElementById('fin-resumo-liquido').innerText = `R$ ${totalLucroLiquidoGeral.toFixed(2)}`;
-      containerTabela.innerHTML = htmlTabela;
+      document.getElementById('fin-resumo-bruto').innerText = `R$ ${bruto.toFixed(2)}`;
+      document.getElementById('fin-resumo-taxas').innerText = `R$ ${taxas.toFixed(2)}`;
+      document.getElementById('fin-resumo-custos').innerText = `R$ 0,00`;
+      document.getElementById('fin-resumo-liquido').innerText = `R$ ${liquido.toFixed(2)}`;
     };
 
-    window.limparFiltroDatas = function() {
-      document.getElementById('fin-data-inicio').value = '';
-      document.getElementById('fin-data-fim').value = '';
-      renderizarRelatorioFinanceiro();
-    };
-
-    window.alternarStatusComissao = async function(idDoc) {
-      if (window.usuarioLogado && window.usuarioLogado.cargo === 'Técnico') return;
-      let os = window.listaOS.find(o => o.idDoc === idDoc);
-      if (os) {
-        let novoStatus = !os.comissaoPaga;
-        await updateDoc(doc(db, "plug_os", idDoc), { comissaoPaga: novoStatus });
-      }
-    };
+    window.limparFiltroDatas = function() { renderizarRelatorioFinanceiro(); };
 
     window.buscarClientePorTelefone = function(val) {
       let fone = val.replace(/\D/g, '');
       if (fone.length < 4) return;
       let enc = window.listaOS.find(o => o.cliente.telefone.replace(/\D/g, '').includes(fone));
       if (enc) document.getElementById('cli-nome').value = enc.cliente.nome;
-    };
-
-    window.clonarOS = function(idOriginal) {
-      let osAntiga = window.listaOS.find(o => o.id === idOriginal);
-      if (!osAntiga) return;
-
-      document.getElementById('cli-fone').value = osAntiga.cliente.telefone || '';
-      document.getElementById('cli-nome').value = osAntiga.cliente.nome || '';
-      document.getElementById('eq-tipo').value = osAntiga.equipamento.tipo || 'Notebook';
-      document.getElementById('eq-marca').value = osAntiga.equipamento.marca || '';
-      document.getElementById('eq-modelo').value = osAntiga.equipamento.modelo || '';
-      document.getElementById('eq-serie').value = osAntiga.equipamento.serie || '';
-      document.getElementById('eq-notas').value = osAntiga.equipamento.notas || '';
-      document.getElementById('eq-reclamacao').value = '';
-
-      mostrarAba('nova-os');
-      document.getElementById('subtitulo-form').innerHTML = `🔄 <strong style="color: #7c3aed;">Clonado da O.S. ${osAntiga.id}</strong> (Preencha o novo defeito e salve)`;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.salvarNovaOS = async function(e) {
@@ -1081,123 +1255,51 @@
           marca: document.getElementById('eq-marca').value.trim(),
           modelo: document.getElementById('eq-modelo').value.trim(),
           serie: document.getElementById('eq-serie').value.trim() || 'N/A',
-          notas: document.getElementById('eq-notas').value.trim() || 'Sem observações.'
+          notas: document.getElementById('eq-notas').value.trim() || 'Sem obs.'
         },
         reclamacao: document.getElementById('eq-reclamacao').value.trim(),
         status: "Aguardando Avaliação",
         tecnico: "",
         diagnostico: "",
         solucao: "",
-        instrucoesRetirada: "",
         carimboCabeca: false,
         formaPagamento: "pix_dinheiro",
         pecas: [],
-        valorServico: 0,
-        notasServico: "",
-        comissaoPaga: false
+        valorServico: 0
       };
 
       await addDoc(collection(db, "plug_os"), nova);
-      
-      document.getElementById('subtitulo-form').innerHTML = 'Preencha os dados abaixo para gerar o comprovante de recepção';
-
       alert(`✅ Ordem de Serviço ${nova.id} gerada com sucesso!`);
       e.target.reset();
-      gerarComprovanteImpressao(nova);
       mostrarAba('lista-os');
     };
 
     window.renderizarListaOS = function() {
       let container = document.getElementById('container-lista-os');
       if (!container) return;
-      let statusFiltro = document.getElementById('filtro-status').value;
-      let busca = (document.getElementById('campo-busca')?.value || '').toLowerCase().trim();
-
       let filtradas = window.listaOS;
-      if (statusFiltro !== 'todos') filtradas = filtradas.filter(o => o.status === statusFiltro);
-      if (busca) {
-        filtradas = filtradas.filter(o => 
-          o.id.toLowerCase().includes(busca) ||
-          o.cliente.nome.toLowerCase().includes(busca) ||
-          o.cliente.telefone.includes(busca) ||
-          o.equipamento.marca.toLowerCase().includes(busca) ||
-          o.equipamento.modelo.toLowerCase().includes(busca) ||
-          o.equipamento.serie.toLowerCase().includes(busca)
-        );
-      }
 
       if (filtradas.length === 0) {
-        container.innerHTML = `<div style="background: white; padding: 30px; text-align: center; color: #64748b; border-radius: 12px; border: 1px solid #e2e8f0;">Nenhuma Ordem de Serviço encontrada.</div>`;
+        container.innerHTML = `<div style="background: white; padding: 20px; text-align: center; color: #64748b; border-radius: 12px;">Nenhuma O.S. encontrada.</div>`;
         return;
       }
 
       container.innerHTML = filtradas.map(os => {
-        let dt = new Date(os.dataEntrada).toLocaleString('pt-BR');
-        let pecas = os.pecas || [];
         let calc = calcularTaxasEValoresOS(os);
-
-        let pecasHtml = pecas.length > 0 ? pecas.map(p => {
-          let descPreco = p.origem === 'O cliente trouxe a peça' ? '<span style="color: #b45309; font-weight: bold;">(Garantia por conta do cliente)</span>' : `(Venda: R$ ${parseFloat(p.venda || 0).toFixed(2)})`;
-          return `
-            <div style="background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-              <span><strong>${p.nome}</strong> ${descPreco}</span>
-              <span style="font-size: 10px; background: #bae6fd; padding: 1px 5px; border-radius: 4px; font-weight: bold;">${p.origem || 'Estoque'} ${p.previsao ? '• Chegada: ' + p.previsao : ''}</span>
-            </div>
-          `;
-        }).join('') : '<span style="color: #94a3b8;">Nenhuma peça.</span>';
-
-        let carimboHtml = os.carimboCabeca ? `
-          <div style="background: #fef2f2; border: 1px solid #ef4444; color: #b91c1c; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; margin-top: 8px; text-transform: uppercase; text-align: center;">
-            🚨 ATENÇÃO: LIMPEZA E DESENTUPIMENTO DE CABEÇA NÃO TEM GARANTIA POIS A QUALIDADE DA IMPRESSÃO DEPENDE DA TINTA UTILIZADA E DA VIDA ÚTIL DA CABEÇA - CABEÇA DE IMPRESSÃO NOVA SÓ TEM GARANTIA COM A UTILIZAÇÃO DE TINTAS ORIGINAIS
-          </div>
-        ` : '';
-
         return `
-          <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
               <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-weight: 900; color: #0284c7; font-size: 15px;">${os.id}</span>
-                  <span style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: bold;">${os.status}</span>
-                </div>
+                <span style="font-weight: 900; color: #0284c7; font-size: 15px;">${os.id}</span>
+                <span style="background: #f1f5f9; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; margin-left: 8px;">${os.status}</span>
                 <h3 style="font-size: 13px; font-weight: bold; margin-top: 4px;">Cliente: ${os.cliente.nome} (${os.cliente.telefone})</h3>
-                <p style="font-size: 11px; color: #64748b; margin-top: 2px;">Entrada: ${dt} | Atendente: <strong>${os.atendente || 'N/A'}</strong> | Técnico: <strong>${os.tecnico || 'N/A'}</strong></p>
               </div>
-              <div style="text-align: right;">
-                <p style="font-size: 10px; color: #94a3b8; font-weight: bold;">TOTAL COBRADO</p>
-                <p style="font-size: 16px; font-weight: 900; color: #059669;">R$ ${calc.valorFinalCliente.toFixed(2)}</p>
-                ${calc.descontoPix > 0 ? `<p style="font-size: 10px; color: #166534;">(Com 5% Desc. Pix)</p>` : ''}
-              </div>
+              <strong style="color: #059669; font-size: 15px;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
-              <div>
-                <p style="font-weight: bold; color: #334155;">💻 Equipamento:</p>
-                <p style="color: #475569;">${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} (S/N: ${os.equipamento.serie})</p>
-                <p style="font-weight: bold; color: #334155; margin-top: 6px;">🔍 Defeito:</p>
-                <p style="color: #475569;">${os.reclamacao}</p>
-              </div>
-              <div>
-                <p style="font-weight: bold; color: #334155;">📦 Peças do Orçamento:</p>
-                <div style="margin-top: 2px;">${pecasHtml}</div>
-                <p style="font-weight: bold; color: #334155; margin-top: 6px;">💡 Solução / Serviço (R$ ${parseFloat(os.valorServico || 0).toFixed(2)}):</p>
-                <p style="color: #475569;">${os.solucao || os.diagnostico || 'Pendente.'}</p>
-                ${os.instrucoesRetirada ? `<p style="font-weight: bold; color: #1e40af; margin-top: 6px;">📌 Instruções Retirada:</p><p style="color: #1e40af;">${os.instrucoesRetirada}</p>` : ''}
-              </div>
-            </div>
-
-            ${carimboHtml}
-
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
-              <div style="display: flex; gap: 6px;">
-                <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
-                <button onclick="clonarOS('${os.id}')" class="btn-sm btn-purple">📋 Clonar O.S.</button>
-              </div>
-              <div style="display: flex; gap: 6px;">
-                <button onclick="enviarWhatsAppOS('${os.id}')" class="btn-sm btn-emerald">📲 WhatsApp</button>
-                <button onclick='gerarComprovanteImpressao(${JSON.stringify(os)})' class="btn-sm btn-dark">🖨️ PDF</button>
-                <button onclick="excluirOS('${os.idDoc}')" class="btn-sm btn-red">🗑️</button>
-              </div>
+            <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
+            <div style="display: flex; gap: 6px;">
+              <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
+              <button onclick="excluirOS('${os.idDoc}')" class="btn-sm btn-red">🗑️</button>
             </div>
           </div>
         `;
@@ -1209,325 +1311,61 @@
       if (!os) return;
       document.getElementById('diag-os-id').value = os.idDoc;
       document.getElementById('diag-status').value = os.status;
-      
-      let selTec = document.getElementById('diag-tecnico-nome');
-      let tecnicos = window.listaColaboradores.filter(c => c.cargo === 'Técnico' || c.cargo === 'Administrador / Gestor');
-      selTec.innerHTML = '<option value="">Selecione o Técnico...</option>' + tecnicos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
-      selTec.value = os.tecnico || '';
-
+      document.getElementById('diag-tecnico-nome').value = os.tecnico || '';
       document.getElementById('diag-tecnico').value = os.diagnostico || '';
       document.getElementById('diag-solucao').value = os.solucao || '';
-      document.getElementById('diag-instrucoes-retirada').value = os.instrucoesRetirada || '';
       document.getElementById('diag-vservico').value = os.valorServico || 0;
-      document.getElementById('diag-notas-serv').value = os.notasServico || '';
       document.getElementById('diag-carimbo-cabeca').checked = os.carimboCabeca || false;
       document.getElementById('diag-forma-pagamento').value = os.formaPagamento || 'pix_dinheiro';
-
-      let selCat = document.getElementById('select-servico-catalogo');
-      let servFiltrados = window.tabelaServicos.filter(s => s.tipo.toLowerCase() === os.equipamento.tipo.toLowerCase());
-      if (servFiltrados.length === 0) servFiltrados = window.tabelaServicos;
-
-      selCat.innerHTML = '<option value="">Selecione um serviço da tabela padrão...</option>' + 
-        servFiltrados.map(s => `<option value="${s.id}">[${s.tipo}] ${s.nome} - R$ ${s.valor.toFixed(2)}</option>`).join('');
-
+      
       let cPecas = document.getElementById('container-pecas-modal');
       cPecas.innerHTML = '';
-      let pecas = os.pecas && os.pecas.length > 0 ? os.pecas : [];
-      if (pecas.length === 0) adicionarLinhaPeca();
-      else pecas.forEach(p => adicionarLinhaPeca(p.nome, p.custo, p.venda, p.origem, p.previsao, p.regraTecnico));
-
+      if (os.pecas) os.pecas.forEach(p => adicionarLinhaPeca(p.nome, p.venda));
       document.getElementById('modal-diagnostico').style.display = 'flex';
     };
 
-    window.adicionarLinhaPeca = function(nome = '', custo = '', venda = '', origem = 'Em Estoque', previsao = '', regraTecnico = 'opcaoA') {
+    window.adicionarLinhaPeca = function(nome='', venda='') {
       let c = document.getElementById('container-pecas-modal');
       let div = document.createElement('div');
       div.className = "linha-peca";
-      div.style.cssText = "background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;";
-      
-      let isCliente = origem === 'O cliente trouxe a peça';
-      let isTecnico = origem === 'Peça fornecida pelo técnico';
-      let displayPrecos = isCliente ? 'display: none;' : 'display: flex;';
-
+      div.style.cssText = "display: flex; gap: 6px;";
       div.innerHTML = `
-        <div style="display: flex; gap: 6px;" class="bloco-inputs-peca">
-          <input type="text" placeholder="Nome da peça" value="${nome}" class="input-peca-nome" style="flex: 2; padding: 6px; font-size: 11px;">
-          <div class="bloco-valores" style="flex: 2; display: flex; gap: 6px; ${displayPrecos}">
-            <input type="number" step="0.01" placeholder="Custo R$" value="${custo}" class="input-peca-custo" style="width: 100%; padding: 6px; font-size: 11px;">
-            <input type="number" step="0.01" placeholder="Venda R$" value="${venda}" class="input-peca-venda" style="width: 100%; padding: 6px; font-size: 11px;">
-          </div>
-          <button type="button" onclick="this.closest('.linha-peca').remove()" class="btn-sm btn-red" style="padding: 2px 8px;">✕</button>
-        </div>
-        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-          <select class="input-peca-origem" onchange="alterarOrigemPeca(this)" style="flex: 1; padding: 4px; font-size: 11px;">
-            <option value="Em Estoque" ${origem === 'Em Estoque' ? 'selected' : ''}>📦 Em Estoque</option>
-            <option value="Comprada / Encomenda" ${origem === 'Comprada / Encomenda' ? 'selected' : ''}>🛒 Comprada / Encomenda</option>
-            <option value="Peça fornecida pelo técnico" ${isTecnico ? 'selected' : ''}>🛠️ Peça fornecida pelo técnico</option>
-            <option value="O cliente trouxe a peça" ${isCliente ? 'selected' : ''}>👤 O cliente trouxe a peça</option>
-          </select>
-          
-          <input type="text" placeholder="Previsão (Ex: 15/11)" value="${previsao}" class="input-peca-previsao" style="flex: 1; padding: 4px; font-size: 11px; ${isCliente ? 'display:none;' : ''}">
-          
-          <select class="input-peca-regra-tec" style="flex: 1; padding: 4px; font-size: 11px; background: #fef3c7; border-color: #fde68a; ${isTecnico ? 'display:block;' : 'display:none;'}">
-            <option value="opcaoA" ${regraTecnico === 'opcaoA' ? 'selected' : ''}>💵 100% Peça p/ Técnico + % Serviço</option>
-            <option value="opcaoB" ${regraTecnico === 'opcaoB' ? 'selected' : ''}>🤝 50% (Peça + Serviço) p/ Cada</option>
-          </select>
-
-          ${isCliente ? '<span class="aviso-garantia" style="font-size: 10px; color: #b45309; font-weight: bold; flex: 1;">⚠️ Garantia por conta do cliente</span>' : ''}
-        </div>
+        <input type="text" placeholder="Nome da peça" value="${nome}" class="input-peca-nome" style="flex: 2; padding: 6px;">
+        <input type="number" step="0.01" placeholder="Venda R$" value="${venda}" class="input-peca-venda" style="flex: 1; padding: 6px;">
+        <button type="button" onclick="this.parentElement.remove()" class="btn-sm btn-red">✕</button>
       `;
       c.appendChild(div);
     };
 
-    window.alterarOrigemPeca = function(selectEl) {
-      let linha = selectEl.closest('.linha-peca');
-      let blocoValores = linha.querySelector('.bloco-valores');
-      let inputPrevisao = linha.querySelector('.input-peca-previsao');
-      let selectRegraTec = linha.querySelector('.input-peca-regra-tec');
-      let selectContainer = selectEl.parentElement;
-
-      let avisoAntigo = selectContainer.querySelector('.aviso-garantia');
-      if (avisoAntigo) avisoAntigo.remove();
-
-      if (selectEl.value === 'O cliente trouxe a peça') {
-        blocoValores.style.display = 'none';
-        inputPrevisao.style.display = 'none';
-        selectRegraTec.style.display = 'none';
-        inputPrevisao.value = '';
-        
-        let span = document.createElement('span');
-        span.className = "aviso-garantia";
-        span.style.cssText = "font-size: 10px; color: #b45309; font-weight: bold; flex: 1;";
-        span.innerText = "⚠️ Garantia por conta do cliente";
-        selectContainer.appendChild(span);
-      } else if (selectEl.value === 'Peça fornecida pelo técnico') {
-        blocoValores.style.display = 'flex';
-        inputPrevisao.style.display = 'block';
-        selectRegraTec.style.display = 'block';
-      } else {
-        blocoValores.style.display = 'flex';
-        inputPrevisao.style.display = 'block';
-        selectRegraTec.style.display = 'none';
-      }
-    };
-
-    window.fecharModalDiagnostico = function() {
-      document.getElementById('modal-diagnostico').style.display = 'none';
-    };
+    window.fecharModalDiagnostico = function() { document.getElementById('modal-diagnostico').style.display = 'none'; };
 
     window.salvarDiagnosticoOS = async function() {
       let idDoc = document.getElementById('diag-os-id').value;
       let linhas = document.querySelectorAll('.linha-peca');
-      let novasPecas = [];
+      let pecas = [];
       linhas.forEach(l => {
         let nome = l.querySelector('.input-peca-nome').value.trim();
-        let origem = l.querySelector('.input-peca-origem').value;
-        let regraTecnico = l.querySelector('.input-peca-regra-tec').value;
-        let custo = 0;
-        let venda = 0;
-        let previsao = '';
-
-        if (origem !== 'O cliente trouxe a peça') {
-          custo = parseFloat(l.querySelector('.input-peca-custo').value) || 0;
-          venda = parseFloat(l.querySelector('.input-peca-venda').value) || 0;
-          previsao = l.querySelector('.input-peca-previsao').value.trim();
-        }
-
-        if (nome || venda > 0 || origem === 'O cliente trouxe a peça') {
-          novasPecas.push({ nome: nome || 'Peça', custo: custo, venda: venda, origem: origem, previsao: previsao, regraTecnico: regraTecnico });
-        }
+        let venda = parseFloat(l.querySelector('.input-peca-venda').value) || 0;
+        if (nome) pecas.push({ nome, venda });
       });
 
-      let dadosAtualizados = {
+      await updateDoc(doc(db, "plug_os", idDoc), {
         status: document.getElementById('diag-status').value,
         tecnico: document.getElementById('diag-tecnico-nome').value,
         diagnostico: document.getElementById('diag-tecnico').value.trim(),
         solucao: document.getElementById('diag-solucao').value.trim(),
-        instrucoesRetirada: document.getElementById('diag-instrucoes-retirada').value.trim(),
         carimboCabeca: document.getElementById('diag-carimbo-cabeca').checked,
         formaPagamento: document.getElementById('diag-forma-pagamento').value,
-        pecas: novasPecas,
-        valorServico: parseFloat(document.getElementById('diag-vservico').value) || 0,
-        notasServico: document.getElementById('diag-notas-serv').value.trim()
-      };
+        pecas: pecas,
+        valorServico: parseFloat(document.getElementById('diag-vservico').value) || 0
+      });
 
-      await updateDoc(doc(db, "plug_os", idDoc), dadosAtualizados);
       fecharModalDiagnostico();
       alert("✅ Ordem de Serviço atualizada com sucesso!");
     };
 
     window.excluirOS = async function(idDoc) {
-      if (confirm(`Deseja realmente remover esta O.S.?`)) {
-        await deleteDoc(doc(db, "plug_os", idDoc));
-      }
-    };
-
-    window.enviarWhatsAppOS = function(id) {
-      let os = window.listaOS.find(o => o.id === id);
-      if (!os) return;
-      let fone = os.cliente.telefone.replace(/\D/g, '');
-      let pecas = os.pecas || [];
-      let calc = calcularTaxasEValoresOS(os);
-
-      let msg = `⚙️ *PLUG INFORMÁTICA - O.S. (${os.id})*\n-----------------------------------\n`;
-      msg += `👤 *Cliente:* ${os.cliente.nome}\n`;
-      msg += `💻 *Equipamento:* ${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}\n`;
-      msg += `📌 *Status:* ${os.status}\n`;
-      if (os.tecnico) msg += `🔧 *Técnico:* ${os.tecnico}\n`;
-      if (os.diagnostico) msg += `🔍 *Diagnóstico:* ${os.diagnostico}\n`;
-      if (os.solucao) msg += `💡 *Serviço / Solução:* ${os.solucao}\n`;
-      if (os.instrucoesRetirada) msg += `📌 *Instruções para Retirada:* ${os.instrucoesRetirada}\n`;
-      
-      if (os.carimboCabeca) {
-        msg += `\n🚨 *ATENÇÃO:* Limpeza e desentupimento de cabeça não tem garantia pois a qualidade da impressão depende da tinta utilizada e da vida útil da cabeça - Cabeça de impressão nova só tem garantia com a utilização de tintas originais.\n`;
-      }
-
-      if (pecas.length > 0 || calc.valorBrutoInicial > 0) {
-        msg += `\n📦 *Orçamento Detalhado:*\n`;
-        pecas.forEach(p => {
-          if (p.origem === 'O cliente trouxe a peça') {
-            msg += `• ${p.nome} - [O cliente trouxe a peça | Garantia por conta do cliente]\n`;
-          } else {
-            msg += `• ${p.nome} (R$ ${parseFloat(p.venda).toFixed(2)}) - [${p.origem}${p.previsao ? ' | Chegada: ' + p.previsao : ''}]\n`;
-          }
-        });
-        msg += `• Mão de Obra / Serviço: R$ ${parseFloat(os.valorServico || 0).toFixed(2)}\n`;
-        if (calc.descontoPix > 0) {
-          msg += `💵 *Valor Padrão:* R$ ${calc.valorBrutoInicial.toFixed(2)}\n`;
-          msg += `💚 *Valor em Pix / Dinheiro (5% Desconto):* R$ ${calc.valorFinalCliente.toFixed(2)}\n`;
-        } else {
-          msg += `💰 *Valor Total:* R$ ${calc.valorFinalCliente.toFixed(2)}\n`;
-        }
-      }
-      msg += `-----------------------------------\nAvenida Portugal, 20 - Centro, Mauá - SP\n📞 (11) 95820-8637`;
-      window.open(`https://api.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msg)}`, '_blank');
-    };
-
-    window.gerarComprovanteImpressao = function(os) {
-      let win = window.open('', '_blank');
-      if (!win) return alert("Permita pop-ups no navegador para imprimir.");
-      let dt = new Date(os.dataEntrada).toLocaleString('pt-BR');
-      let pecas = os.pecas || [];
-      let calc = calcularTaxasEValoresOS(os);
-
-      let pecasHtml = pecas.map(p => {
-        if (p.origem === 'O cliente trouxe a peça') {
-          return `
-            <div style="padding: 4px 0; border-bottom: 1px dotted #ccc; font-size: 11px;">
-              <div><strong>${p.nome}</strong> - <span style="color: #b45309; font-weight: bold;">O cliente trouxe a peça</span></div>
-              <div style="font-size: 9px; color: #78350f;">⚠️ Observação: A garantia da peça é por conta do cliente.</div>
-            </div>
-          `;
-        } else {
-          return `
-            <div style="display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; font-size: 11px;">
-              <span><strong>${p.nome}</strong> <span style="font-size: 9px; color: #555;">(${p.origem}${p.previsao ? ' - Previsão: ' + p.previsao : ''})</span></span>
-              <span>R$ ${parseFloat(p.venda || 0).toFixed(2)}</span>
-            </div>
-          `;
-        }
-      }).join('');
-
-      let carimboPdfHtml = os.carimboCabeca ? `
-        <div style="border: 3px dashed #ef4444; background: #fef2f2; color: #b91c1c; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-weight: 900; font-size: 11px; line-height: 1.4; text-transform: uppercase;">
-          🚨 ATENÇÃO: LIMPEZA E DESENTUPIMENTO DE CABEÇA NÃO TEM GARANTIA POIS A QUALIDADE DA IMPRESSÃO DEPENDE DA TINTA UTILIZADA E DA VIDA ÚTIL DA CABEÇA - CABEÇA DE IMPRESSÃO NOVA SÓ TEM GARANTIA COM A UTILIZAÇÃO DE TINTAS ORIGINAIS
-        </div>
-      ` : '';
-
-      win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Ordem de Serviço ${os.id}</title>
-          <style>
-            body { font-family: sans-serif; padding: 15px; color: #000; max-width: 800px; margin: auto; font-size: 12px; line-height: 1.3; }
-            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-            .box { border: 1px solid #999; padding: 10px; border-radius: 6px; margin-bottom: 10px; background: #fafafa; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-            .terms { font-size: 9px; color: #444; border: 1px solid #ccc; padding: 8px; border-radius: 6px; margin-top: 10px; }
-            .terms ul { margin: 0; padding-left: 12px; }
-            .footer-sign { margin-top: 30px; display: flex; justify-content: space-between; font-size: 10px; }
-            .line { border-top: 1px solid #000; width: 45%; text-align: center; padding-top: 4px; font-weight: bold; }
-            @media print { .no-print { display: none; } }
-          </style>
-        </head>
-        <body>
-          <div class="no-print" style="text-align: center; margin-bottom: 15px;">
-            <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">🖨️ Imprimir / Salvar PDF</button>
-          </div>
-
-          <div class="header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <img src="robozinho.jpg" alt="Logo" style="height: 45px; max-width: 130px; object-fit: contain;" onerror="this.style.display='none';">
-              <div>
-                <h2 style="margin:0; font-size: 16px; color: #0284c7;">PLUG INFORMÁTICA</h2>
-                <p style="margin:2px 0 0 0; font-size: 9px;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 16px; font-weight: bold;">${os.id}</div>
-              <div style="font-size: 9px;">pluginformatica.net.br@gmail.com</div>
-            </div>
-          </div>
-
-          ${carimboPdfHtml}
-
-          <div class="box">
-            <div class="grid">
-              <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
-              <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
-              <div><strong>Data Entrada:</strong> ${dt}</div>
-              <div><strong>Status:</strong> ${os.status}</div>
-              <div><strong>Atendente:</strong> ${os.atendente || 'N/A'}</div>
-              <div><strong>Técnico:</strong> ${os.tecnico || 'N/A'}</div>
-            </div>
-          </div>
-
-          <div class="box">
-            <strong>Equipamento:</strong> ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} <br>
-            <strong>Nº de Série:</strong> ${os.equipamento.serie} | <strong>Acessórios/Obs:</strong> ${os.equipamento.notas}
-          </div>
-
-          <div class="box">
-            <strong>Defeito Relatado:</strong> ${os.reclamacao}
-          </div>
-
-          ${(os.diagnostico || pecas.length > 0 || calc.valorBrutoInicial > 0 || os.instrucoesRetirada) ? `
-          <div class="box">
-            <strong>Diagnóstico:</strong> ${os.diagnostico || 'N/A'} <br>
-            <strong>Serviço / Solução:</strong> ${os.solucao || 'N/A'}
-            ${os.instrucoesRetirada ? `<br><strong style="color: #1e40af;">Instruções para Retirada:</strong> <span style="color: #1e40af; font-weight: bold;">${os.instrucoesRetirada}</span>` : ''}
-            <div style="margin-top: 6px;"><strong>Peças Utilizadas:</strong></div>
-            ${pecas.length > 0 ? pecasHtml : '<div style="font-size: 10px; color: #666;">Nenhuma peça vinculada.</div>'}
-            <div style="margin-top: 6px; border-top: 1px dashed #999; padding-top: 4px; display: flex; justify-content: space-between; align-items: center;">
-              <span>Subtotal Peças: R$ ${calc.subtotalPecasCusto.toFixed(2)} | Mão de Obra: R$ ${parseFloat(os.valorServico || 0).toFixed(2)}</span>
-              <div style="text-align: right;">
-                ${calc.descontoPix > 0 ? `<div style="font-size: 10px; color: #166534;">Desconto Pix (5%): - R$ ${calc.descontoPix.toFixed(2)}</div>` : ''}
-                <strong style="color: #059669; font-size: 13px;">Total Final: R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
-              </div>
-            </div>
-          </div>
-          ` : ''}
-
-          <div class="terms">
-            <strong>Termos e Condições:</strong>
-            <ul>
-              <li>Aprovação automática até R$ 240,00 (Geral), R$ 280,00 (Impressoras) e R$ 400,00 (Notebooks).</li>
-              <li>Orçamento em até 5 dias úteis. Devolução de reprovados em até 7 dias úteis.</li>
-              <li>Backup e arquivos são de responsabilidade exclusiva do cliente.</li>
-              <li>Garantia de 90 dias (não cobre mau uso, vírus, raios, oscilações ou tintas compatíveis).</li>
-              <li>Orçamento válido por 30 dias.</li>
-            </ul>
-          </div>
-
-          <div class="footer-sign">
-            <div class="line">PLUG Informática</div>
-            <div class="line">Assinatura do Técnico / Empresa</div>
-          </div>
-        </body>
-        </html>
-      `);
-      win.document.close();
+      if (confirm("Deseja excluir esta O.S.?")) await deleteDoc(doc(db, "plug_os", idDoc));
     };
   </script>
 </body>
