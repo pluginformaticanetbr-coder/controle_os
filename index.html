@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PLUG Informática - Sistema de O.S. e Gestão de Estoque</title>
   
+  <!-- Biblioteca oficial leve para gerar QR Codes perfeitos e legíveis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background-color: #f1f5f9; color: #1e293b; padding-bottom: 50px; }
@@ -1479,7 +1482,7 @@
       }, 1000);
     };
 
-    // --- ORÇAMENTO COMPLETO (COM QR CODE VETORIAL NATIVO E 2X SEM JUROS) ---
+    // --- ORÇAMENTO COMPLETO (COM QR CODE PROFISSIONAL GERADO POR BIBLIOTECA) ---
     window.imprimirOSCompleta = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1498,6 +1501,7 @@
       `).join('') : `<tr><td colspan="2" style="padding: 6px; color: #64748b; text-align: center;">Nenhuma peça avulsa adicionada.</td></tr>`;
 
       let valorPixStr = (calc.valorBrutoInicial * 0.95).toFixed(2);
+      let dadosPix = `00020126580014br.gov.bcb.pix0136pluginformatica.net.br@gmail.com5204000053039865802BR5913PLUG INFORMATICA6009SAO PAULO62070503${os.id}6304`;
 
       let win = window.open('', '_blank');
       let htmlConteudo = `
@@ -1505,6 +1509,8 @@
         <head>
           <meta charset="UTF-8">
           <title>Orçamento O.S. ${os.id}</title>
+          <!-- Importa a biblioteca de QR Code dentro da janela de impressão -->
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
           <style>
             body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
@@ -1523,9 +1529,7 @@
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
-            .qr-container { text-align: center; background: white; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
-            /* QR Code vetorizado robusto gerado nativamente em SVG para nunca falhar */
-            .svg-qr { width: 95px; height: 95px; display: block; }
+            .qr-container { text-align: center; background: white; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; display: inline-block; }
           </style>
         </head>
         <body>
@@ -1582,18 +1586,32 @@
               <h3>R$ ${valorPixStr}</h3>
               <p style="font-size: 10px; color: #047857; margin-top: 2px;">Valor Bruto: R$ ${calc.valorBrutoInicial.toFixed(2)} | Ou em <strong>2x de R$ ${calc.valorParcela2x.toFixed(2)} sem juros</strong></p>
             </div>
-            <div class="qr-container">
-              <!-- SVG vetorial nativo do QR Code para leitura imediata e perfeita -->
-              <svg class="svg-qr" viewBox="0 0 25 25">
-                <path fill="#000" d="M0 0h9v9H0zM2 2v5h5V2H2zM3 3h3v3H3zM16 0h9v9h-9zM18 2v5h5V2h-5zM19 3h3v3h-3zM0 16h9v9H0zM2 18v5h5v-5H2zM3 19h3v3H3zM12 0h2v2h-2zM10 3h2v2h-2zM14 4h2v3h-2zM3 12h2v2H3zM6 10h2v3H6zM10 12h2v2h-2zM12 10h2v2h-2zM14 14h2v2h-2zM16 12h2v3h-2zM19 10h2v2h-2zM21 14h2v2h-2zM23 10h2v2h-2zM10 16h2v3h-2zM12 19h2v2h-2zM16 19h2v2h-2zM19 16h2v2h-2zM21 19h2v2h-2zM23 16h2v2h-2z"/>
-              </svg>
-              <p style="font-size: 8px; font-weight: bold; color: #065f46; margin-top: 2px;">Pague com Pix</p>
+            <div style="text-align: center;">
+              <div id="qrcode-pix" class="qr-container"></div>
+              <p style="font-size: 9px; font-weight: bold; color: #065f46; margin-top: 3px;">Pague com Pix</p>
             </div>
           </div>
 
           <div class="footer-notes">
             <p>🛡️ Garantia de 90 dias a partir da data de fechamento/conclusão. Válida até: <span style="color: #0284c7; font-size: 11px;">${dataGarantiaFormatada}</span></p>
           </div>
+
+          <script>
+            // Gera o QR Code perfeitamente legível via script nativo
+            new QRCode(document.getElementById("qrcode-pix"), {
+              text: "${dadosPix}",
+              width: 100,
+              height: 100,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.M
+            });
+
+            setTimeout(() => {
+              window.focus();
+              window.print();
+            }, 400);
+          </script>
         </body>
         </html>
       `;
@@ -1601,11 +1619,6 @@
       win.document.open();
       win.document.write(htmlConteudo);
       win.document.close();
-
-      setTimeout(() => {
-        win.focus();
-        win.print();
-      }, 300);
     };
 
     window.enviarWhatsAppOrcamento = function(idDoc) {
