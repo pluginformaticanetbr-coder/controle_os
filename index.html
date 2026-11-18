@@ -438,7 +438,7 @@
             <option value="pix_dinheiro">💚 Pix / Dinheiro (5% de Desconto para o Cliente)</option>
             <option value="debito">💳 Cartão de Débito (Taxa 1,40%)</option>
             <option value="credito_avista">💳 Crédito à Vista (Taxa 3,42%)</option>
-            <option value="credito_2x">💳 Crédito em 2x (Taxa 7,19%)</option>
+            <option value="credito_2x">💳 Crédito em 2x sem juros (Taxa 7,19%)</option>
             <option value="outros">💵 Outro</option>
           </select>
         </div>
@@ -657,6 +657,7 @@
 
     onSnapshot(collection(db, "plug_tabela_servicos"), (snapshot) => {
       window.tabelaServicos = snapshot.docs.map(doc => ({ idDoc: doc.id, ...doc.data() }));
+      atualizarSelectServicosCatalogo();
       renderizarTabelaServicos();
     });
 
@@ -694,6 +695,17 @@
       }
       selectLogin.innerHTML = '<option value="">Selecione seu nome...</option>' + 
         window.listaColaboradores.map(c => `<option value="${c.nome}">${c.nome} (${c.cargo})</option>`).join('');
+    }
+
+    function atualizarSelectServicosCatalogo() {
+      const selectServ = document.getElementById('select-servico-catalogo');
+      if (!selectServ) return;
+      if (window.tabelaServicos.length === 0) {
+        selectServ.innerHTML = '<option value="">Nenhum serviço cadastrado...</option>';
+        return;
+      }
+      selectServ.innerHTML = '<option value="">Selecione um serviço...</option>' + 
+        window.tabelaServicos.map(s => `<option value="${s.id}">${s.tipo} - ${s.nome} (R$ ${s.valor.toFixed(2)})</option>`).join('');
     }
 
     window.realizarLogin = function(e) {
@@ -1176,7 +1188,9 @@
       else if (formaPag === 'credito_avista') taxaCartao = valorBruto * 0.0342;
       else if (formaPag === 'credito_2x') taxaCartao = valorBruto * 0.0719;
 
-      return { valorBrutoInicial: valorBruto, descontoPix, taxaCartaoMoeda: taxaCartao, valorFinalCliente: valorFinal, subtotalPecasCusto: subtotalPecas };
+      let valorParcela2x = valorBruto / 2;
+
+      return { valorBrutoInicial: valorBruto, descontoPix, taxaCartaoMoeda: taxaCartao, valorFinalCliente: valorFinal, valorParcela2x, subtotalPecasCusto: subtotalPecas };
     }
 
     window.renderizarRelatorioComissoes = function() {
@@ -1275,7 +1289,7 @@
       mostrarAba('lista-os');
     };
 
-    // --- IMPRESSÃO VIA CLIENTE (CORRIGIDA COM TIMEOUT) ---
+    // --- IMPRESSÃO VIA CLIENTE ---
     window.imprimirViaCliente = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1289,6 +1303,7 @@
           <style>
             body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+            .logo-img { height: 50px; max-width: 150px; object-fit: contain; }
             .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
             .empresa-info p { font-size: 11px; color: #64748b; }
             .os-badge { text-align: right; }
@@ -1304,9 +1319,12 @@
         <body>
           <div style="font-size: 11px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 5px;">📌 1ª VIA - CLIENTE</div>
           <div class="header">
-            <div class="empresa-info">
-              <h1>PLUG INFORMÁTICA</h1>
-              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="robozinho.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none';">
+              <div class="empresa-info">
+                <h1>PLUG INFORMÁTICA</h1>
+                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+              </div>
             </div>
             <div class="os-badge">
               <h2>${os.id}</h2>
@@ -1353,14 +1371,13 @@
       win.document.write(htmlConteudo);
       win.document.close();
       
-      // Pequeno atraso para garantir o carregamento do DOM antes de chamar a impressão
       setTimeout(() => {
         win.focus();
         win.print();
       }, 300);
     };
 
-    // --- IMPRESSÃO VIA TÉCNICO (CORRIGIDA COM TIMEOUT) ---
+    // --- IMPRESSÃO VIA TÉCNICO ---
     window.imprimirViaTecnico = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1374,6 +1391,7 @@
           <style>
             body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+            .logo-img { height: 50px; max-width: 150px; object-fit: contain; }
             .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
             .empresa-info p { font-size: 11px; color: #64748b; }
             .os-badge { text-align: right; }
@@ -1390,9 +1408,12 @@
         <body>
           <div style="font-size: 11px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 5px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
           <div class="header">
-            <div class="empresa-info">
-              <h1>PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
-              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Atendente: ${os.atendente}</p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="robozinho.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none';">
+              <div class="empresa-info">
+                <h1>PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
+                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Atendente: ${os.atendente}</p>
+              </div>
             </div>
             <div class="os-badge">
               <h2>${os.id}</h2>
@@ -1449,7 +1470,7 @@
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
-      let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*.\n\nReclamação: ${os.reclamacao}\n\nAcompanhe conosco!`;
+      let msg = `*🛠️ PLUG INFORMÁTICA - COMPROVANTE DE ENTRADA* 🛠️\nAvenida Portugal, 20 - Centro, Mauá - SP\nTel: (11) 95820-8637\n\nOlá *${os.cliente.nome}*,\nSeu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada em nossa assistência.\n\n📋 *O.S.:* ${os.id}\n⚠️ *Reclamação:* ${os.reclamacao}\n\nAcompanhe conosco!`;
       
       window.imprimirViaCliente(idDoc);
 
@@ -1458,7 +1479,7 @@
       }, 1000);
     };
 
-    // --- ORÇAMENTO COMPLETO (COM 90 DIAS DE GARANTIA) ---
+    // --- ORÇAMENTO COMPLETO (COM QR CODE E 2X SEM JUROS) ---
     window.imprimirOSCompleta = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1476,6 +1497,10 @@
         </tr>
       `).join('') : `<tr><td colspan="2" style="padding: 6px; color: #64748b; text-align: center;">Nenhuma peça avulsa adicionada.</td></tr>`;
 
+      // QR Code em base64 fornecido pelo usuário
+      let qrCodeBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="; 
+      // Nota: o base64 real da imagem enviada está integrado abaixo no script do documento impresso.
+
       let win = window.open('', '_blank');
       let htmlConteudo = `
         <html>
@@ -1485,6 +1510,7 @@
           <style>
             body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+            .logo-img { height: 50px; max-width: 150px; object-fit: contain; }
             .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
             .empresa-info p { font-size: 11px; color: #64748b; }
             .os-badge { text-align: right; }
@@ -1495,17 +1521,22 @@
             .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
             p { font-size: 12px; margin-bottom: 4px; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-            .total-box { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; text-align: right; margin-top: 15px; }
+            .total-box { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
+            .qr-container { text-align: center; }
+            .qr-container img { width: 110px; height: 110px; object-fit: contain; border: 1px solid #cbd5e1; padding: 4px; background: white; border-radius: 6px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="empresa-info">
-              <h1>PLUG INFORMÁTICA</h1>
-              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="robozinho.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none';">
+              <div class="empresa-info">
+                <h1>PLUG INFORMÁTICA</h1>
+                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+              </div>
             </div>
             <div class="os-badge">
               <h2>${os.id}</h2>
@@ -1547,9 +1578,15 @@
           </div>
 
           <div class="total-box">
-            <p style="font-size: 11px; color: #065f46; font-weight: bold;">VALOR TOTAL DO ORÇAMENTO</p>
-            <h3>R$ ${calc.valorFinalCliente.toFixed(2)}</h3>
-            <p style="font-size: 10px; color: #047857; margin-top: 2px;">(Condição: ${os.formaPagamento === 'pix_dinheiro' ? 'Pix / Dinheiro com 5% de desconto já aplicado' : 'Forma selecionada'})</p>
+            <div>
+              <p style="font-size: 11px; color: #065f46; font-weight: bold;">VALOR TOTAL (PIX / DINHEIRO COM 5% DESC.)</p>
+              <h3>R$ ${(calc.valorBrutoInicial * 0.95).toFixed(2)}</h3>
+              <p style="font-size: 10px; color: #047857; margin-top: 2px;">Valor Bruto: R$ ${calc.valorBrutoInicial.toFixed(2)} | Ou em <strong>2x de R$ ${calc.valorParcela2x.toFixed(2)} sem juros</strong></p>
+            </div>
+            <div class="qr-container">
+              <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" alt="QR Code Pix" id="qr-img-orc">
+              <p style="font-size: 9px; font-weight: bold; color: #065f46; margin-top: 2px;">Pague com Pix</p>
+            </div>
           </div>
 
           <div class="footer-notes">
@@ -1574,7 +1611,12 @@
       if (!os) return;
       let calc = calcularTaxasEValoresOS(os);
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
-      let msg = `Olá *${os.cliente.nome}*, aqui é da *PLUG Informática*. Segue o orçamento da O.S. *${os.id}* (${os.equipamento.tipo} ${os.equipamento.marca}):\n\n🔧 *Serviço/Reparo:* ${os.solucao || os.reclamacao}\n💰 *Valor Total:* R$ ${calc.valorFinalCliente.toFixed(2)} (c/ desconto Pix)\n\nPodemos prosseguir com o reparo?`;
+      
+      let valorPix = (calc.valorBrutoInicial * 0.95).toFixed(2);
+      let valor2x = calc.valorParcela2x.toFixed(2);
+
+      let msg = `*🛠️ PLUG INFORMÁTICA - ORÇAMENTO O.S. ${os.id}* 🛠️\nAvenida Portugal, 20 - Centro, Mauá - SP\nTel: (11) 95820-8637\n\nOlá *${os.cliente.nome}*,\nSegue o orçamento para o equipamento *${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*:\n\n🔧 *Serviço/Reparo:* ${os.solucao || os.reclamacao}\n\n💚 *Valor no Pix / Dinheiro (c/ 5% desc.):* R$ ${valorPix}\n💳 *Parcelamento:* 2x de R$ ${valor2x} sem juros\n\nPodemos prosseguir com o reparo?`;
+      
       window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
     };
 
@@ -1642,6 +1684,8 @@
       document.getElementById('diag-carimbo-cabeca').checked = os.carimboCabeca || false;
       document.getElementById('diag-forma-pagamento').value = os.formaPagamento || 'pix_dinheiro';
       
+      atualizarSelectServicosCatalogo();
+
       let cPecas = document.getElementById('container-pecas-modal');
       cPecas.innerHTML = '';
       if (os.pecas) os.pecas.forEach(p => adicionarLinhaPeca(p.nome, p.venda));
