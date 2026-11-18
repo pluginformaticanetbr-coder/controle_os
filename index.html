@@ -1264,24 +1264,24 @@
         valorServico: 0
       };
 
-      await addDoc(collection(db, "plug_os"), nova);
+      let docRef = await addDoc(collection(db, "plug_os"), nova);
       alert(`✅ Ordem de Serviço ${nova.id} gerada com sucesso!`);
       e.target.reset();
       
       if (confirm("Deseja imprimir a via do cliente agora?")) {
-        window.imprimirViaCliente(nova.idDoc ? nova.idDoc : '');
+        window.imprimirViaCliente(docRef.id);
       }
 
       mostrarAba('lista-os');
     };
 
-    // --- IMPRESSÃO VIA CLIENTE (PADRÃO ORÇAMENTO - ABERTO EM NOVA ABA) ---
+    // --- IMPRESSÃO VIA CLIENTE (CORRIGIDA COM TIMEOUT) ---
     window.imprimirViaCliente = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
 
       let win = window.open('', '_blank');
-      win.document.write(`
+      let htmlConteudo = `
         <html>
         <head>
           <meta charset="UTF-8">
@@ -1345,21 +1345,28 @@
             <p>• Orçamento sujeito à aprovação prévia. Respeita os limites de aprovação automática cadastrados.</p>
             <p>• Equipamentos não retirados no prazo de 90 dias após a conclusão ficarão sujeitos a taxas de guarda.</p>
           </div>
-
-          <script>window.print();<\/script>
         </body>
         </html>
-      `);
+      `;
+
+      win.document.open();
+      win.document.write(htmlConteudo);
       win.document.close();
+      
+      // Pequeno atraso para garantir o carregamento do DOM antes de chamar a impressão
+      setTimeout(() => {
+        win.focus();
+        win.print();
+      }, 300);
     };
 
-    // --- IMPRESSÃO VIA TÉCNICO (PADRÃO ORÇAMENTO - ABERTO EM NOVA ABA) ---
+    // --- IMPRESSÃO VIA TÉCNICO (CORRIGIDA COM TIMEOUT) ---
     window.imprimirViaTecnico = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
 
       let win = window.open('', '_blank');
-      win.document.write(`
+      let htmlConteudo = `
         <html>
         <head>
           <meta charset="UTF-8">
@@ -1423,22 +1430,27 @@
           <div class="footer-notes">
             <p>• Documento interno de acompanhamento de bancada e controle técnico.</p>
           </div>
-
-          <script>window.print();<\/script>
         </body>
         </html>
-      `);
+      `;
+
+      win.document.open();
+      win.document.write(htmlConteudo);
       win.document.close();
+
+      setTimeout(() => {
+        win.focus();
+        win.print();
+      }, 300);
     };
 
-    // --- ENVIAR COMPROVANTE VIA WHATSAPP COM PDF BAIXADO ---
+    // --- ENVIAR COMPROVANTE VIA WHATSAPP ---
     window.enviarWhatsAppEntrada = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
       let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*.\n\nReclamação: ${os.reclamacao}\n\nAcompanhe conosco!`;
       
-      // Abre a via do cliente para impressão/download automática e em seguida dispara o WhatsApp
       window.imprimirViaCliente(idDoc);
 
       setTimeout(() => {
@@ -1465,7 +1477,7 @@
       `).join('') : `<tr><td colspan="2" style="padding: 6px; color: #64748b; text-align: center;">Nenhuma peça avulsa adicionada.</td></tr>`;
 
       let win = window.open('', '_blank');
-      win.document.write(`
+      let htmlConteudo = `
         <html>
         <head>
           <meta charset="UTF-8">
@@ -1543,12 +1555,18 @@
           <div class="footer-notes">
             <p>🛡️ Garantia de 90 dias a partir da data de fechamento/conclusão. Válida até: <span style="color: #0284c7; font-size: 11px;">${dataGarantiaFormatada}</span></p>
           </div>
-
-          <script>window.print();<\/script>
         </body>
         </html>
-      `);
+      `;
+
+      win.document.open();
+      win.document.write(htmlConteudo);
       win.document.close();
+
+      setTimeout(() => {
+        win.focus();
+        win.print();
+      }, 300);
     };
 
     window.enviarWhatsAppOrcamento = function(idDoc) {
