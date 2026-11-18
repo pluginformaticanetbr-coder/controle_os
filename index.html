@@ -1274,7 +1274,7 @@
       mostrarAba('lista-os');
     };
 
-    // --- RELATÓRIOS DE IMPRESSÃO (SEM ASSINATURA) ---
+    // --- RELATÓRIO DE ENTRADA (DUAS VIAS: CLIENTE + TÉCNICO) ---
     window.imprimirComprovanteEntrada = function(os) {
       let win = window.open('', '_blank');
       win.document.write(`
@@ -1283,66 +1283,114 @@
           <meta charset="UTF-8">
           <title>Comprovante O.S. ${os.id}</title>
           <style>
-            body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
-            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
-            .logo-area { display: flex; align-items: center; gap: 12px; }
-            .logo-area img { height: 55px; max-width: 150px; object-fit: contain; border-radius: 6px; }
-            .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
-            .empresa-info p { font-size: 11px; color: #64748b; }
+            body { font-family: Arial, sans-serif; color: #1e293b; padding: 15px; max-width: 700px; margin: auto; }
+            .via-container { border: 1px dashed #64748b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; }
+            .logo-area { display: flex; align-items: center; gap: 10px; }
+            .logo-area img { height: 45px; max-width: 130px; object-fit: contain; border-radius: 6px; }
+            .empresa-info h1 { font-size: 14px; font-weight: 900; color: #0f172a; }
+            .empresa-info p { font-size: 10px; color: #64748b; }
             .os-badge { text-align: right; }
-            .os-badge h2 { font-size: 18px; color: #0284c7; font-weight: 900; }
-            .os-badge p { font-size: 11px; color: #64748b; }
-            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
-            .box-title { font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
-            p { font-size: 12px; margin-bottom: 4px; }
-            .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; }
+            .os-badge h2 { font-size: 16px; color: #0284c7; font-weight: 900; }
+            .os-badge p { font-size: 10px; color: #64748b; }
+            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+            .box-title { font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; }
+            p { font-size: 11px; margin-bottom: 3px; }
+            .footer-notes { font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px; margin-top: 10px; }
+            .linha-escrever { border-bottom: 1px dotted #94a3b8; height: 22px; margin-top: 4px; }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo-area">
-              <img src="robozinho.jpg" alt="Logo" onerror="this.style.display='none';">
-              <div class="empresa-info">
-                <h1>PLUG INFORMÁTICA</h1>
-                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+          <!-- 1ª VIA: CLIENTE -->
+          <div class="via-container">
+            <div style="font-size: 10px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 4px;">📌 1ª VIA - CLIENTE</div>
+            <div class="header">
+              <div class="logo-area">
+                <img src="robozinho.jpg" alt="Logo" onerror="this.style.display='none';">
+                <div class="empresa-info">
+                  <h1>PLUG INFORMÁTICA</h1>
+                  <p>Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
+                </div>
+              </div>
+              <div class="os-badge">
+                <h2>${os.id}</h2>
+                <p>Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
               </div>
             </div>
-            <div class="os-badge">
-              <h2>${os.id}</h2>
-              <p>Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+
+            <div class="box">
+              <div class="box-title">👤 Dados do Cliente</div>
+              <div class="grid-2">
+                <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
+                <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
+              </div>
+              <div style="margin-top: 4px; font-size: 11px;"><strong>Atendente:</strong> ${os.atendente}</div>
+            </div>
+
+            <div class="box">
+              <div class="box-title">💻 Especificações do Equipamento</div>
+              <div class="grid-2">
+                <div><strong>Tipo:</strong> ${os.equipamento.tipo}</div>
+                <div><strong>Marca / Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</div>
+                <div><strong>Série / Tag:</strong> ${os.equipamento.serie}</div>
+                <div><strong>Acessórios:</strong> ${os.equipamento.notas}</div>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-title">⚠️ Defeito Relatado / Reclamação</div>
+              <p>${os.reclamacao}</p>
+            </div>
+
+            <div class="footer-notes">
+              <p>• Orçamento sujeito à aprovação prévia. Apóiam-se nos limites de aprovação automática cadastrados.</p>
             </div>
           </div>
 
-          <h3 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
-
-          <div class="box">
-            <div class="box-title">👤 Dados do Cliente</div>
-            <div class="grid-2">
-              <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
-              <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
+          <!-- 2ª VIA: TÉCNICO -->
+          <div class="via-container">
+            <div style="font-size: 10px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 4px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
+            <div class="header">
+              <div class="logo-area">
+                <div class="empresa-info">
+                  <h1>PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
+                  <p>Ordem de Serviço: <strong>${os.id}</strong> | Entrada: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+              <div class="os-badge">
+                <h2>${os.equipamento.tipo}</h2>
+                <p>Atendente: ${os.atendente}</p>
+              </div>
             </div>
-            <div style="margin-top: 6px; font-size: 12px;"><strong>Atendente:</strong> ${os.atendente}</div>
-          </div>
 
-          <div class="box">
-            <div class="box-title">💻 Especificações do Equipamento</div>
-            <div class="grid-2">
-              <div><strong>Tipo:</strong> ${os.equipamento.tipo}</div>
-              <div><strong>Marca / Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</div>
-              <div><strong>Nº de Série / Tag:</strong> ${os.equipamento.serie}</div>
-              <div><strong>Estado / Acessórios:</strong> ${os.equipamento.notas}</div>
+            <div class="box">
+              <div class="box-title">💻 Equipamento & Identificação</div>
+              <p><strong>Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo} | <strong>Série:</strong> ${os.equipamento.serie}</p>
+              <p><strong>Acessórios:</strong> ${os.equipamento.notas}</p>
             </div>
-          </div>
 
-          <div class="box">
-            <div class="box-title">⚠️ Defeito Relatado / Reclamação</div>
-            <p>${os.reclamacao}</p>
-          </div>
+            <div class="box">
+              <div class="box-title">⚠️ Defeito Apresentado</div>
+              <p>${os.reclamacao}</p>
+            </div>
 
-          <div class="footer-notes">
-            <p>• Orçamento sujeito à aprovação prévia. A aprovação automática é válida conforme limites cadastrados.</p>
-            <p>• Equipamentos não retirados no prazo de 90 dias após a conclusão ficarão sujeitos a taxas de guarda.</p>
+            <div class="box">
+              <div class="box-title">🛠️ Procedimento para Solução / Diagnóstico</div>
+              <div class="linha-escrever"></div>
+              <div class="linha-escrever"></div>
+            </div>
+
+            <div class="box">
+              <div class="box-title">📦 Peças Utilizadas & Serviços Executados</div>
+              <div class="linha-escrever"></div>
+              <div class="linha-escrever"></div>
+            </div>
+
+            <div class="box">
+              <div class="box-title">📝 Observações Técnicas</div>
+              <div class="linha-escrever"></div>
+            </div>
           </div>
 
           <script>window.print();<\/script>
@@ -1360,10 +1408,17 @@
       window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
     };
 
+    // --- ORÇAMENTO COMPLETO (COM 90 DIAS DE GARANTIA A PARTIR DA DATA DE FECHAMENTO) ---
     window.imprimirOSCompleta = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
       let calc = calcularTaxasEValoresOS(os);
+
+      // Calcula 90 dias a partir da data de hoje (ou data de conclusão/fechamento)
+      let dataFechamento = new Date();
+      let dataVencimentoGarantia = new Date(dataFechamento);
+      dataVencimentoGarantia.setDate(dataVencimentoGarantia.getDate() + 90);
+      let dataGarantiaFormatada = dataVencimentoGarantia.toLocaleDateString('pt-BR');
 
       let pecasRows = (os.pecas && os.pecas.length > 0) ? os.pecas.map(p => `
         <tr>
@@ -1396,7 +1451,7 @@
             .total-box { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; text-align: right; margin-top: 15px; }
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
-            .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; }
+            .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
           </style>
         </head>
         <body>
@@ -1454,7 +1509,7 @@
           </div>
 
           <div class="footer-notes">
-            <p>• Garantia de 90 dias sobre os serviços executados e peças trocadas (exceto itens informados em termo específico).</p>
+            <p>🛡️ Garantia de 90 dias a partir da data de fechamento/conclusão. Válida até: <span style="color: #0284c7; font-size: 11px;">${dataGarantiaFormatada}</span></p>
           </div>
 
           <script>window.print();<\/script>
