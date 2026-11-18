@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PLUG Informática - Sistema de O.S. e Gestão de Estoque</title>
   
-  {/* Biblioteca html2pdf para conversão perfeita em PDF */}
+  <!-- Biblioteca html2pdf -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -621,8 +621,8 @@
     </div>
   </div>
 
-  <!-- ELEMENTO OCULTO PARA GERAÇÃO DO PDF EXATO EM 2 PÁGINAS -->
-  <div id="comprovante-pdf-container" style="display:none; background: white; width: 210mm; padding: 15mm; font-family: Arial, sans-serif; color: #1e293b;"></div>
+  <!-- CONTAINER DE PDF VISÍVEL APENAS PARA O RENDERIZADOR (FORA DA TELA) -->
+  <div id="comprovante-pdf-container" style="position: absolute; left: -9999px; top: 0; width: 210mm; background: white; padding: 15mm; font-family: Arial, sans-serif; color: #1e293b;"></div>
 
   <!-- SCRIPT INTEGRADO COM FIREBASE E LÓGICA COMPLETA -->
   <script type="module">
@@ -1284,15 +1284,13 @@
     // --- FUNÇÃO PARA GERAR HTML DO COMPROVANTE (2 PÁGINAS EXATAS) ---
     function montarHTMLComprovante(os) {
       return `
-        <div style="height: 270mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; padding-bottom: 10mm;">
+        <div style="width: 210mm; min-height: 297mm; padding: 15mm; background: white; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; page-break-inside: avoid;">
           <div>
             <div style="font-size: 10px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 6px;">📌 1ª VIA - CLIENTE</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div>
-                  <h1 style="font-size: 15px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h1>
-                  <p style="font-size: 10px; color: #64748b;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
-                </div>
+              <div>
+                <h1 style="font-size: 15px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h1>
+                <p style="font-size: 10px; color: #64748b;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
               </div>
               <div style="text-align: right;">
                 <h2 style="font-size: 16px; color: #0284c7; font-weight: 900;">${os.id}</h2>
@@ -1334,7 +1332,7 @@
         </div>
 
         <!-- 2ª PÁGINA: VIA DO TÉCNICO -->
-        <div style="height: 270mm; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="width: 210mm; min-height: 297mm; padding: 15mm; background: white; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid;">
           <div>
             <div style="font-size: 10px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 6px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
@@ -1396,7 +1394,6 @@
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      // Gera e abre a janela de impressão diretamente com as 2 páginas calculadas
       html2pdf().from(containerPdf).set(opt).toPdf().get('pdf').then((pdf) => {
         let blobPdf = pdf.output('blob');
         let blobUrl = URL.createObjectURL(blobPdf);
@@ -1405,14 +1402,13 @@
       });
     };
 
-    // --- ENVIAR COMPROVANTE / ORÇAMENTO NO WHATSAPP COM OPÇÃO DE PDF ---
+    // --- ENVIAR COMPROVANTE / ORÇAMENTO NO WHATSAPP COM GERENCIAMENTO DE PDF ---
     window.enviarWhatsAppEntrada = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
       let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*.\n\nReclamação: ${os.reclamacao}\n\nAcompanhe conosco!`;
       
-      // Gera o PDF automaticamente para download e já abre o WhatsApp do cliente
       let containerPdf = document.getElementById('comprovante-pdf-container');
       containerPdf.innerHTML = montarHTMLComprovante(os);
       
@@ -1574,7 +1570,7 @@
         return;
       }
 
-      container.innerHTML = filtradas.map(os => {
+    container.innerHTML = filtradas.map(os => {
         let calc = calcularTaxasEValoresOS(os);
         return `
           <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px;">
