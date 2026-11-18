@@ -53,6 +53,7 @@
     .btn-dark { background: #1e293b; color: white; }
     .btn-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
     .btn-purple { background: #7c3aed; color: white; }
+    .btn-whatsapp { background: #16a34a; color: white; }
 
     /* Modais */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
@@ -1271,13 +1272,118 @@
       await addDoc(collection(db, "plug_os"), nova);
       alert(`✅ Ordem de Serviço ${nova.id} gerada com sucesso!`);
       e.target.reset();
+      
+      // Pergunta se deseja imprimir ou enviar WhatsApp do comprovante de entrada
+      if (confirm("Deseja imprimir ou enviar o comprovante de entrada no WhatsApp do cliente?")) {
+        imprimirComprovanteEntrada(nova);
+      }
+
       mostrarAba('lista-os');
+    };
+
+    // --- FUNÇÕES DE IMPRESSÃO E WHATSAPP ---
+    window.imprimirComprovanteEntrada = function(os) {
+      let win = window.open('', '_blank');
+      win.document.write(`
+        <html>
+        <head><title>Comprovante O.S. ${os.id}</title></head>
+        <body style="font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto;">
+          <h2 style="text-align:center; margin-bottom:0;">PLUG INFORMÁTICA</h2>
+          <p style="text-align:center; font-size: 11px; margin-top:2px;">Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637</p>
+          <hr style="border: 1px dashed #000;">
+          <h3 style="text-align:center; margin: 10px 0;">COMPROVANTE DE ENTRADA</h3>
+          <p><strong>O.S.:</strong> ${os.id}</p>
+          <p><strong>Data:</strong> ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+          <p><strong>Cliente:</strong> ${os.cliente.nome} (${os.cliente.telefone})</p>
+          <p><strong>Atendente:</strong> ${os.atendente}</p>
+          <hr style="border: 1px dashed #000;">
+          <p><strong>Equipamento:</strong> ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo}</p>
+          <p><strong>Nº de Série:</strong> ${os.equipamento.serie}</p>
+          <p><strong>Defeito Relatado:</strong> ${os.reclamacao}</p>
+          <hr style="border: 1px dashed #000;">
+          <p style="font-size: 10px;">* Orçamento sujeito a aprovação prévia.<br>* Prazo para retirada após aviso: 90 dias.</p>
+          <div style="margin-top: 40px; text-align: center; font-size: 11px;">_________________________________________<br>Assinatura do Cliente</div>
+          <script>window.print();<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
+    };
+
+    window.enviarWhatsAppEntrada = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
+      let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
+      let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*. Acompanhe conosco!`;
+      window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.imprimirOSCompleta = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
+      let calc = calcularTaxasEValoresOS(os);
+
+      let pecasHtml = (os.pecas || []).map(p => `<tr><td>${p.nome}</td><td style="text-align:right;">R$ ${p.venda.toFixed(2)}</td></tr>`).join('');
+
+      let win = window.open('', '_blank');
+      win.document.write(`
+        <html>
+        <head><title>Orçamento O.S. ${os.id}</title></head>
+        <body style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto;">
+          <h2 style="text-align:center; margin-bottom:0;">PLUG INFORMÁTICA - ORDEM DE SERVIÇO / ORÇAMENTO</h2>
+          <p style="text-align:center; font-size: 11px;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
+          <hr>
+          <p><strong>O.S.:</strong> ${os.id} | <strong>Status:</strong> ${os.status}</p>
+          <p><strong>Cliente:</strong> ${os.cliente.nome} (${os.cliente.telefone})</p>
+          <p><strong>Equipamento:</strong> ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} (Série: ${os.equipamento.serie})</p>
+          <p><strong>Reclamação:</strong> ${os.reclamacao}</p>
+          <hr>
+          <p><strong>Diagnóstico Técnico:</strong> ${os.diagnostico || 'Não informado'}</p>
+          <p><strong>Solução / Reparo:</strong> ${os.solucao || 'Em andamento'}</p>
+          ${os.carimboCabeca ? '<div style="border: 2px solid red; color: red; padding: 10px; font-weight: bold; text-align: center; margin: 10px 0;">🚨 APLICAR CARIMBO: LIMPEZA DE CABEÇA SEM GARANTIA</div>' : ''}
+          <hr>
+          <h4>Peças e Serviços:</h4>
+          <table style="width:150px; width:100%; border-collapse: collapse; font-size: 12px;">
+            <tr><td style="font-weight:bold;">Mão de Obra / Serviço</td><td style="text-align:right; font-weight:bold;">R$ ${(os.valorServico||0).toFixed(2)}</td></tr>
+            ${pecasHtml}
+          </table>
+          <hr>
+          <h3 style="text-align:right;">Valor Final: R$ ${calc.valorFinalCliente.toFixed(2)}</h3>
+          <script>window.print();<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
+    };
+
+    window.enviarWhatsAppOrcamento = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
+      let calc = calcularTaxasEValoresOS(os);
+      let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
+      let msg = `Olá *${os.cliente.nome}*, aqui é da *PLUG Informática*. Segue o orçamento da O.S. *${os.id}* (${os.equipamento.tipo} ${os.equipamento.marca}):\n\n🔧 *Serviço/Reparo:* ${os.solucao || os.reclamacao}\n💰 *Valor Total:* R$ ${calc.valorFinalCliente.toFixed(2)} (c/ desconto Pix)\n\nPodemos prosseguir com o reparo?`;
+      window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     window.renderizarListaOS = function() {
       let container = document.getElementById('container-lista-os');
       if (!container) return;
       let filtradas = window.listaOS;
+
+      let termoBusca = (document.getElementById('campo-busca')?.value || '').toLowerCase();
+      let filtroStatus = document.getElementById('filtro-status')?.value || 'todos';
+
+      if (filtroStatus !== 'todos') {
+        filtradas = filtradas.filter(os => os.status === filtroStatus);
+      }
+      if (termoBusca) {
+        filtradas = filtradas.filter(os => 
+          os.id.toLowerCase().includes(termoBusca) ||
+          os.cliente.nome.toLowerCase().includes(termoBusca) ||
+          os.cliente.telefone.includes(termoBusca) ||
+          os.equipamento.modelo.toLowerCase().includes(termoBusca)
+        );
+      }
 
       if (filtradas.length === 0) {
         container.innerHTML = `<div style="background: white; padding: 20px; text-align: center; color: #64748b; border-radius: 12px;">Nenhuma O.S. encontrada.</div>`;
@@ -1297,8 +1403,12 @@
               <strong style="color: #059669; font-size: 15px;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
             </div>
             <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
-            <div style="display: flex; gap: 6px;">
-              <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Atualizar Avaliação</button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Avaliação</button>
+              <button onclick="imprimirComprovanteEntrada(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-dark">🖨️ Imprimir Entrada</button>
+              <button onclick="enviarWhatsAppEntrada('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 Zap Entrada</button>
+              <button onclick="imprimirOSCompleta('${os.idDoc}')" class="btn-sm btn-dark">📄 Imprimir Orçamento</button>
+              <button onclick="enviarWhatsAppOrcamento('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 Zap Orçamento</button>
               <button onclick="excluirOS('${os.idDoc}')" class="btn-sm btn-red">🗑️</button>
             </div>
           </div>
