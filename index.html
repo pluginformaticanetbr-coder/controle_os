@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PLUG Informática - Sistema de O.S. e Gestão de Estoque</title>
   
-  <!-- Biblioteca html2pdf para geração de PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background-color: #f1f5f9; color: #1e293b; padding-bottom: 50px; }
@@ -620,9 +617,6 @@
       </div>
     </div>
   </div>
-
-  <!-- CONTAINER DE PDF OCULTO PARA GERAÇÃO -->
-  <div id="comprovante-pdf-container" style="position: absolute; left: -9999px; top: 0; width: 210mm; background: white; padding: 15mm; font-family: Arial, sans-serif; color: #1e293b;"></div>
 
   <!-- SCRIPT INTEGRADO COM FIREBASE E LÓGICA COMPLETA -->
   <script type="module">
@@ -1275,154 +1269,166 @@
       e.target.reset();
       
       if (confirm("Deseja imprimir a via do cliente agora?")) {
-        window.imprimirViaCliente(nova);
+        window.imprimirViaCliente(nova.idDoc ? nova.idDoc : '');
       }
 
       mostrarAba('lista-os');
     };
 
-    // --- FUNÇÕES HTML SEPARADAS (CLIENTE E TÉCNICO) ---
-    function montarHTMLViaCliente(os) {
-      return `
-        <div style="width: 210mm; min-height: 280mm; padding: 15mm; background: white; font-family: Arial, sans-serif; color: #1e293b; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 11px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 6px;">📌 1ª VIA - CLIENTE</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-              <div>
-                <h1 style="font-size: 16px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h1>
-                <p style="font-size: 11px; color: #64748b;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
-              </div>
-              <div style="text-align: right;">
-                <h2 style="font-size: 18px; color: #0284c7; font-weight: 900;">${os.id}</h2>
-                <p style="font-size: 11px; color: #64748b;">Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
-              </div>
+    // --- IMPRESSÃO VIA CLIENTE (PADRÃO ORÇAMENTO - ABERTO EM NOVA ABA) ---
+    window.imprimirViaCliente = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
+
+      let win = window.open('', '_blank');
+      win.document.write(`
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Via Cliente - O.S. ${os.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+            .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
+            .empresa-info p { font-size: 11px; color: #64748b; }
+            .os-badge { text-align: right; }
+            .os-badge h2 { font-size: 18px; color: #0284c7; font-weight: 900; }
+            .os-badge p { font-size: 11px; color: #64748b; }
+            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+            .box-title { font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
+            p { font-size: 12px; margin-bottom: 4px; }
+            .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 25px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div style="font-size: 11px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 5px;">📌 1ª VIA - CLIENTE</div>
+          <div class="header">
+            <div class="empresa-info">
+              <h1>PLUG INFORMÁTICA</h1>
+              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
             </div>
-
-            <h3 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">👤 Dados do Cliente</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-                <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
-                <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
-              </div>
-              <div style="margin-top: 6px; font-size: 12px;"><strong>Atendente:</strong> ${os.atendente}</div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">💻 Especificações do Equipamento</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-                <div><strong>Tipo:</strong> ${os.equipamento.tipo}</div>
-                <div><strong>Marca / Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</div>
-                <div><strong>Série / Tag:</strong> ${os.equipamento.serie}</div>
-                <div><strong>Acessórios:</strong> ${os.equipamento.notas}</div>
-              </div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">⚠️ Defeito Relatado / Reclamação</div>
-              <p style="font-size: 12px;">${os.reclamacao}</p>
+            <div class="os-badge">
+              <h2>${os.id}</h2>
+              <p>Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
             </div>
           </div>
 
-          <div style="font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+          <h3 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
+
+          <div class="box">
+            <div class="box-title">👤 Dados do Cliente & Atendimento</div>
+            <div class="grid-2">
+              <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
+              <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
+              <div><strong>Atendente:</strong> ${os.atendente}</div>
+              <div><strong>Status:</strong> ${os.status}</div>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="box-title">💻 Especificações do Equipamento</div>
+            <div class="grid-2">
+              <div><strong>Tipo:</strong> ${os.equipamento.tipo}</div>
+              <div><strong>Marca / Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</div>
+              <div><strong>Série / Tag:</strong> ${os.equipamento.serie}</div>
+              <div><strong>Acessórios:</strong> ${os.equipamento.notas}</div>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="box-title">⚠️ Defeito Relatado / Reclamação</div>
+            <p>${os.reclamacao}</p>
+          </div>
+
+          <div class="footer-notes">
             <p>• Orçamento sujeito à aprovação prévia. Respeita os limites de aprovação automática cadastrados.</p>
             <p>• Equipamentos não retirados no prazo de 90 dias após a conclusão ficarão sujeitos a taxas de guarda.</p>
           </div>
-        </div>
-      `;
-    }
 
-    function montarHTMLViaTecnico(os) {
-      return `
-        <div style="width: 210mm; min-height: 280mm; padding: 15mm; background: white; font-family: Arial, sans-serif; color: #1e293b; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 11px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 6px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
-              <div>
-                <h1 style="font-size: 15px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
-                <p style="font-size: 11px; color: #64748b;">Ordem de Serviço: <strong>${os.id}</strong> | Entrada: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
-              </div>
-              <div style="text-align: right;">
-                <h2 style="font-size: 16px; color: #dc2626; font-weight: 900;">${os.equipamento.tipo}</h2>
-                <p style="font-size: 11px; color: #64748b;">Atendente: ${os.atendente}</p>
-              </div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">💻 Equipamento & Identificação</div>
-              <p style="font-size: 12px;"><strong>Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo} | <strong>Série:</strong> ${os.equipamento.serie}</p>
-              <p style="font-size: 12px; margin-top: 4px;"><strong>Acessórios Deixados:</strong> ${os.equipamento.notas}</p>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">⚠️ Defeito Apresentado</div>
-              <p style="font-size: 12px;">${os.reclamacao}</p>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">🛠️ Procedimento para Solução</div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📦 Peças Utilizadas & Serviços Executados</div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📝 Observação</div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 35px; margin-top: 8px;"></div>
-            </div>
-          </div>
-
-          <div style="font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-            <p>• Documento interno de acompanhamento de bancada e controle técnico.</p>
-          </div>
-        </div>
-      `;
-    }
-
-    // --- FUNÇÕES DE IMPRESSÃO ISOLADAS ---
-    window.imprimirViaCliente = function(os) {
-      let container = document.getElementById('comprovante-pdf-container');
-      container.innerHTML = montarHTMLViaCliente(os);
-
-      let opt = {
-        margin: 0,
-        filename: `Comprovante_Cliente_${os.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().from(container).set(opt).toPdf().get('pdf').then((pdf) => {
-        let blob = pdf.output('blob');
-        let url = URL.createObjectURL(blob);
-        let win = window.open(url, '_blank');
-        if (win) win.print();
-      });
+          <script>window.print();<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
     };
 
-    window.imprimirViaTecnico = function(os) {
-      let container = document.getElementById('comprovante-pdf-container');
-      container.innerHTML = montarHTMLViaTecnico(os);
+    // --- IMPRESSÃO VIA TÉCNICO (PADRÃO ORÇAMENTO - ABERTO EM NOVA ABA) ---
+    window.imprimirViaTecnico = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
 
-      let opt = {
-        margin: 0,
-        filename: `Comprovante_Tecnico_${os.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      let win = window.open('', '_blank');
+      win.document.write(`
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Via Técnico - O.S. ${os.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
+            .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
+            .empresa-info p { font-size: 11px; color: #64748b; }
+            .os-badge { text-align: right; }
+            .os-badge h2 { font-size: 18px; color: #dc2626; font-weight: 900; }
+            .os-badge p { font-size: 11px; color: #64748b; }
+            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+            .box-title { font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
+            p { font-size: 12px; margin-bottom: 4px; }
+            .linha-pontilhada { border-bottom: 1px dotted #94a3b8; height: 35px; margin-top: 8px; }
+            .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div style="font-size: 11px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 5px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
+          <div class="header">
+            <div class="empresa-info">
+              <h1>PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
+              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Atendente: ${os.atendente}</p>
+            </div>
+            <div class="os-badge">
+              <h2>${os.id}</h2>
+              <p>Entrada: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
 
-      html2pdf().from(container).set(opt).toPdf().get('pdf').then((pdf) => {
-        let blob = pdf.output('blob');
-        let url = URL.createObjectURL(blob);
-        let win = window.open(url, '_blank');
-        if (win) win.print();
-      });
+          <div class="box">
+            <div class="box-title">💻 Equipamento & Identificação</div>
+            <p><strong>Tipo:</strong> ${os.equipamento.tipo} | <strong>Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</p>
+            <p style="margin-top: 4px;"><strong>Série / Tag:</strong> ${os.equipamento.serie} | <strong>Acessórios:</strong> ${os.equipamento.notas}</p>
+          </div>
+
+          <div class="box">
+            <div class="box-title">⚠️ Defeito Apresentado</div>
+            <p>${os.reclamacao}</p>
+          </div>
+
+          <div class="box">
+            <div class="box-title">🛠️ Procedimento para Solução</div>
+            <div class="linha-pontilhada"></div>
+            <div class="linha-pontilhada"></div>
+          </div>
+
+          <div class="box">
+            <div class="box-title">📦 Peças Utilizadas & Serviços Executados</div>
+            <div class="linha-pontilhada"></div>
+          </div>
+
+          <div class="box">
+            <div class="box-title">📝 Observação</div>
+            <div class="linha-pontilhada" style="height: 25px;"></div>
+          </div>
+
+          <div class="footer-notes">
+            <p>• Documento interno de acompanhamento de bancada e controle técnico.</p>
+          </div>
+
+          <script>window.print();<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
     };
 
     // --- ENVIAR COMPROVANTE VIA WHATSAPP COM PDF BAIXADO ---
@@ -1432,18 +1438,8 @@
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
       let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*.\n\nReclamação: ${os.reclamacao}\n\nAcompanhe conosco!`;
       
-      let container = document.getElementById('comprovante-pdf-container');
-      container.innerHTML = montarHTMLViaCliente(os);
-      
-      let opt = {
-        margin: 0,
-        filename: `Comprovante_${os.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().from(container).set(opt).save();
+      // Abre a via do cliente para impressão/download automática e em seguida dispara o WhatsApp
+      window.imprimirViaCliente(idDoc);
 
       setTimeout(() => {
         window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
@@ -1477,8 +1473,6 @@
           <style>
             body { font-family: Arial, sans-serif; color: #1e293b; padding: 25px; max-width: 700px; margin: auto; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px; }
-            .logo-area { display: flex; align-items: center; gap: 12px; }
-            .logo-area img { height: 55px; max-width: 150px; object-fit: contain; border-radius: 6px; }
             .empresa-info h1 { font-size: 16px; font-weight: 900; color: #0f172a; }
             .empresa-info p { font-size: 11px; color: #64748b; }
             .os-badge { text-align: right; }
@@ -1497,11 +1491,9 @@
         </head>
         <body>
           <div class="header">
-            <div class="logo-area">
-              <div class="empresa-info">
-                <h1>PLUG INFORMÁTICA</h1>
-                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
-              </div>
+            <div class="empresa-info">
+              <h1>PLUG INFORMÁTICA</h1>
+              <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
             </div>
             <div class="os-badge">
               <h2>${os.id}</h2>
@@ -1608,8 +1600,8 @@
             <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Avaliação</button>
-              <button onclick="imprimirViaCliente(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-dark">🖨️ Via Cliente</button>
-              <button onclick="imprimirViaTecnico(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-red">🔧 Via Técnico</button>
+              <button onclick="imprimirViaCliente('${os.idDoc}')" class="btn-sm btn-dark">🖨️ Via Cliente</button>
+              <button onclick="imprimirViaTecnico('${os.idDoc}')" class="btn-sm btn-red">🔧 Via Técnico</button>
               <button onclick="enviarWhatsAppEntrada('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 PDF & Zap</button>
               <button onclick="imprimirOSCompleta('${os.idDoc}')" class="btn-sm btn-dark">📄 Orçamento</button>
               <button onclick="enviarWhatsAppOrcamento('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 Zap Orçamento</button>
