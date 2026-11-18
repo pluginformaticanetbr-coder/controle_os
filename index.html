@@ -1274,7 +1274,7 @@
       mostrarAba('lista-os');
     };
 
-    // --- RELATÓRIOS DE IMPRESSÃO COMPLETOS (COM LOGO E CABEÇALHO) ---
+    // --- RELATÓRIOS DE IMPRESSÃO (SEM ASSINATURA) ---
     window.imprimirComprovanteEntrada = function(os) {
       let win = window.open('', '_blank');
       win.document.write(`
@@ -1297,7 +1297,6 @@
             .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; }
             p { font-size: 12px; margin-bottom: 4px; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; }
-            .assinatura { margin-top: 50px; text-align: center; font-size: 11px; }
           </style>
         </head>
         <body>
@@ -1344,11 +1343,6 @@
           <div class="footer-notes">
             <p>• Orçamento sujeito à aprovação prévia. A aprovação automática é válida conforme limites cadastrados.</p>
             <p>• Equipamentos não retirados no prazo de 90 dias após a conclusão ficarão sujeitos a taxas de guarda.</p>
-          </div>
-
-          <div class="assinatura">
-            ___________________________________________________<br>
-            <strong>Assinatura do Cliente</strong>
           </div>
 
           <script>window.print();<\/script>
@@ -1403,7 +1397,6 @@
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; }
-            .assinatura { margin-top: 40px; text-align: center; font-size: 11px; }
           </style>
         </head>
         <body>
@@ -1462,11 +1455,6 @@
 
           <div class="footer-notes">
             <p>• Garantia de 90 dias sobre os serviços executados e peças trocadas (exceto itens informados em termo específico).</p>
-          </div>
-
-          <div class="assinatura">
-            ___________________________________________________<br>
-            <strong>De Acordo / Assinatura do Cliente</strong>
           </div>
 
           <script>window.print();<\/script>
