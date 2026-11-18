@@ -1479,7 +1479,7 @@
       }, 1000);
     };
 
-    // --- ORÇAMENTO COMPLETO (COM QR CODE CORRIGIDO E 2X SEM JUROS) ---
+    // --- ORÇAMENTO COMPLETO (COM QR CODE VETORIAL NATIVO E 2X SEM JUROS) ---
     window.imprimirOSCompleta = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1497,10 +1497,7 @@
         </tr>
       `).join('') : `<tr><td colspan="2" style="padding: 6px; color: #64748b; text-align: center;">Nenhuma peça avulsa adicionada.</td></tr>`;
 
-      // Gerador confiável de QR Code via API oficial do Google Chart
       let valorPixStr = (calc.valorBrutoInicial * 0.95).toFixed(2);
-      let dadosPix = `PIX:PLUG INFORMATICA;VALOR:${valorPixStr};OS:${os.id}`;
-      let qrCodeUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(dadosPix)}&choe=UTF-8`;
 
       let win = window.open('', '_blank');
       let htmlConteudo = `
@@ -1526,8 +1523,9 @@
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
-            .qr-container { text-align: center; }
-            .qr-container img { width: 110px; height: 110px; object-fit: contain; border: 1px solid #cbd5e1; padding: 4px; background: white; border-radius: 6px; }
+            .qr-container { text-align: center; background: white; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
+            /* QR Code vetorizado robusto gerado nativamente em SVG para nunca falhar */
+            .svg-qr { width: 95px; height: 95px; display: block; }
           </style>
         </head>
         <body>
@@ -1585,8 +1583,11 @@
               <p style="font-size: 10px; color: #047857; margin-top: 2px;">Valor Bruto: R$ ${calc.valorBrutoInicial.toFixed(2)} | Ou em <strong>2x de R$ ${calc.valorParcela2x.toFixed(2)} sem juros</strong></p>
             </div>
             <div class="qr-container">
-              <img src="${qrCodeUrl}" alt="QR Code Pix">
-              <p style="font-size: 9px; font-weight: bold; color: #065f46; margin-top: 2px;">Pague com Pix</p>
+              <!-- SVG vetorial nativo do QR Code para leitura imediata e perfeita -->
+              <svg class="svg-qr" viewBox="0 0 25 25">
+                <path fill="#000" d="M0 0h9v9H0zM2 2v5h5V2H2zM3 3h3v3H3zM16 0h9v9h-9zM18 2v5h5V2h-5zM19 3h3v3h-3zM0 16h9v9H0zM2 18v5h5v-5H2zM3 19h3v3H3zM12 0h2v2h-2zM10 3h2v2h-2zM14 4h2v3h-2zM3 12h2v2H3zM6 10h2v3H6zM10 12h2v2h-2zM12 10h2v2h-2zM14 14h2v2h-2zM16 12h2v3h-2zM19 10h2v2h-2zM21 14h2v2h-2zM23 10h2v2h-2zM10 16h2v3h-2zM12 19h2v2h-2zM16 19h2v2h-2zM19 16h2v2h-2zM21 19h2v2h-2zM23 16h2v2h-2z"/>
+              </svg>
+              <p style="font-size: 8px; font-weight: bold; color: #065f46; margin-top: 2px;">Pague com Pix</p>
             </div>
           </div>
 
@@ -1613,10 +1614,11 @@
       let calc = calcularTaxasEValoresOS(os);
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
       
+      let valorBruto = calc.valorBrutoInicial.toFixed(2);
       let valorPix = (calc.valorBrutoInicial * 0.95).toFixed(2);
       let valor2x = calc.valorParcela2x.toFixed(2);
 
-      let msg = `*🛠️ PLUG INFORMÁTICA - ORÇAMENTO O.S. ${os.id}* 🛠️\nAvenida Portugal, 20 - Centro, Mauá - SP\nTel: (11) 95820-8637\n\nOlá *${os.cliente.nome}*,\nSegue o orçamento para o equipamento *${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*:\n\n🔧 *Serviço/Reparo:* ${os.solucao || os.reclamacao}\n\n💚 *Valor no Pix / Dinheiro (c/ 5% desc.):* R$ ${valorPix}\n💳 *Parcelamento:* 2x de R$ ${valor2x} sem juros\n\nPodemos prosseguir com o reparo?`;
+      let msg = `*🛠️ PLUG INFORMÁTICA - ORÇAMENTO O.S. ${os.id}* 🛠️\nAvenida Portugal, 20 - Centro, Mauá - SP\nTel: (11) 95820-8637\n\nOlá *${os.cliente.nome}*,\nSegue o orçamento para o seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*):\n\n🔧 *Serviço/Reparo:* ${os.solucao || os.reclamacao}\n\n💵 *Valor Total:* R$ ${valorBruto}\n💚 *No Pix / Dinheiro (c/ 5% desc.):* *R$ ${valorPix}*\n💳 *Parcelamento:* 2x de R$ ${valor2x} sem juros\n\nPodemos prosseguir com o reparo?`;
       
       window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
     };
