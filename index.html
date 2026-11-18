@@ -1274,7 +1274,7 @@
       mostrarAba('lista-os');
     };
 
-    // --- RELATÓRIO DE ENTRADA (EM FOLHAS SEPARADAS: 1ª VIA CLIENTE + 2ª VIA TÉCNICO) ---
+    // --- RELATÓRIO DE ENTRADA (EXATAMENTE DUAS PÁGINAS SEPARADAS) ---
     window.imprimirComprovanteEntrada = function(os) {
       let win = window.open('', '_blank');
       win.document.write(`
@@ -1283,22 +1283,26 @@
           <meta charset="UTF-8">
           <title>Comprovante O.S. ${os.id}</title>
           <style>
-            body { font-family: Arial, sans-serif; color: #1e293b; padding: 20px; max-width: 700px; margin: auto; }
-            .pagina { page-break-after: always; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; }
-            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px; }
+            @media print {
+              .pagina { page-break-after: always; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; }
+              .pagina:last-child { page-break-after: avoid; }
+            }
+            body { font-family: Arial, sans-serif; color: #1e293b; padding: 10px; max-width: 700px; margin: auto; }
+            .pagina { height: 100vh; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 20px; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; }
             .logo-area { display: flex; align-items: center; gap: 10px; }
-            .logo-area img { height: 50px; max-width: 140px; object-fit: contain; border-radius: 6px; }
-            .empresa-info h1 { font-size: 15px; font-weight: 900; color: #0f172a; }
+            .logo-area img { height: 45px; max-width: 130px; object-fit: contain; border-radius: 6px; }
+            .empresa-info h1 { font-size: 14px; font-weight: 900; color: #0f172a; }
             .empresa-info p { font-size: 10px; color: #64748b; }
             .os-badge { text-align: right; }
-            .os-badge h2 { font-size: 17px; color: #0284c7; font-weight: 900; }
+            .os-badge h2 { font-size: 16px; color: #0284c7; font-weight: 900; }
             .os-badge p { font-size: 10px; color: #64748b; }
-            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-            .box-title { font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px; }
-            p { font-size: 11px; margin-bottom: 4px; }
-            .footer-notes { font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 10px; }
-            .linha-escrever { border-bottom: 1px dotted #94a3b8; height: 30px; margin-top: 6px; }
+            .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+            .box-title { font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; }
+            p { font-size: 11px; margin-bottom: 3px; }
+            .footer-notes { font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px; margin-top: 8px; }
+            .linha-escrever { border-bottom: 1px dotted #94a3b8; height: 26px; margin-top: 4px; }
           </style>
         </head>
         <body>
@@ -1320,7 +1324,7 @@
                 </div>
               </div>
 
-              <h3 style="text-align: center; font-size: 13px; margin-bottom: 12px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
+              <h3 style="text-align: center; font-size: 12px; margin-bottom: 10px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
 
               <div class="box">
                 <div class="box-title">👤 Dados do Cliente</div>
@@ -1328,7 +1332,7 @@
                   <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
                   <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
                 </div>
-                <div style="margin-top: 6px; font-size: 11px;"><strong>Atendente:</strong> ${os.atendente}</div>
+                <div style="margin-top: 5px; font-size: 11px;"><strong>Atendente:</strong> ${os.atendente}</div>
               </div>
 
               <div class="box">
@@ -1353,8 +1357,8 @@
             </div>
           </div>
 
-          <!-- 2ª PÁGINA: VIA DO TÉCNICO (FOLHA SEPARADA) -->
-          <div class="pagina" style="page-break-before: always;">
+          <!-- 2ª PÁGINA: VIA DO TÉCNICO -->
+          <div class="pagina">
             <div>
               <div style="font-size: 10px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 4px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
               <div class="header">
