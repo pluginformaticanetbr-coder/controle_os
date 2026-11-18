@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PLUG Informática - Sistema de O.S. e Gestão de Estoque</title>
   
-  <!-- Biblioteca html2pdf -->
+  <!-- Biblioteca html2pdf para geração de PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -621,7 +621,7 @@
     </div>
   </div>
 
-  <!-- CONTAINER DE PDF VISÍVEL APENAS PARA O RENDERIZADOR (FORA DA TELA) -->
+  <!-- CONTAINER DE PDF OCULTO PARA GERAÇÃO -->
   <div id="comprovante-pdf-container" style="position: absolute; left: -9999px; top: 0; width: 210mm; background: white; padding: 15mm; font-family: Arial, sans-serif; color: #1e293b;"></div>
 
   <!-- SCRIPT INTEGRADO COM FIREBASE E LÓGICA COMPLETA -->
@@ -1274,44 +1274,44 @@
       alert(`✅ Ordem de Serviço ${nova.id} gerada com sucesso!`);
       e.target.reset();
       
-      if (confirm("Deseja imprimir o comprovante de entrada em 2 páginas?")) {
-        imprimirComprovanteEntrada(nova);
+      if (confirm("Deseja imprimir a via do cliente agora?")) {
+        window.imprimirViaCliente(nova);
       }
 
       mostrarAba('lista-os');
     };
 
-    // --- FUNÇÃO PARA GERAR HTML DO COMPROVANTE (2 PÁGINAS EXATAS) ---
-    function montarHTMLComprovante(os) {
+    // --- FUNÇÕES HTML SEPARADAS (CLIENTE E TÉCNICO) ---
+    function montarHTMLViaCliente(os) {
       return `
-        <div style="width: 210mm; min-height: 297mm; padding: 15mm; background: white; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; page-break-inside: avoid;">
+        <div style="width: 210mm; min-height: 280mm; padding: 15mm; background: white; font-family: Arial, sans-serif; color: #1e293b; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <div style="font-size: 10px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 6px;">📌 1ª VIA - CLIENTE</div>
+            <div style="font-size: 11px; font-weight: bold; text-align: right; color: #0284c7; margin-bottom: 6px;">📌 1ª VIA - CLIENTE</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
               <div>
-                <h1 style="font-size: 15px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h1>
-                <p style="font-size: 10px; color: #64748b;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
+                <h1 style="font-size: 16px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA</h1>
+                <p style="font-size: 11px; color: #64748b;">Avenida Portugal, 20 - Centro, Mauá - SP | Tel: (11) 95820-8637</p>
               </div>
               <div style="text-align: right;">
-                <h2 style="font-size: 16px; color: #0284c7; font-weight: 900;">${os.id}</h2>
-                <p style="font-size: 10px; color: #64748b;">Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+                <h2 style="font-size: 18px; color: #0284c7; font-weight: 900;">${os.id}</h2>
+                <p style="font-size: 11px; color: #64748b;">Data: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
               </div>
             </div>
 
-            <h3 style="text-align: center; font-size: 13px; margin-bottom: 12px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
+            <h3 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #0f172a; text-transform: uppercase;">Comprovante de Recepção de Equipamento</h3>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">👤 Dados do Cliente</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">👤 Dados do Cliente</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
                 <div><strong>Cliente:</strong> ${os.cliente.nome}</div>
                 <div><strong>Telefone:</strong> ${os.cliente.telefone}</div>
               </div>
-              <div style="margin-top: 5px; font-size: 11px;"><strong>Atendente:</strong> ${os.atendente}</div>
+              <div style="margin-top: 6px; font-size: 12px;"><strong>Atendente:</strong> ${os.atendente}</div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">💻 Especificações do Equipamento</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">💻 Especificações do Equipamento</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
                 <div><strong>Tipo:</strong> ${os.equipamento.tipo}</div>
                 <div><strong>Marca / Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo}</div>
                 <div><strong>Série / Tag:</strong> ${os.equipamento.serie}</div>
@@ -1319,108 +1319,131 @@
               </div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">⚠️ Defeito Relatado / Reclamação</div>
-              <p style="font-size: 11px;">${os.reclamacao}</p>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px;">⚠️ Defeito Relatado / Reclamação</div>
+              <p style="font-size: 12px;">${os.reclamacao}</p>
             </div>
           </div>
 
-          <div style="font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-            <p>• Orçamento sujeito à aprovação prévia. Apóiam-se nos limites de aprovação automática cadastrados.</p>
+          <div style="font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+            <p>• Orçamento sujeito à aprovação prévia. Respeita os limites de aprovação automática cadastrados.</p>
             <p>• Equipamentos não retirados no prazo de 90 dias após a conclusão ficarão sujeitos a taxas de guarda.</p>
           </div>
         </div>
+      `;
+    }
 
-        <!-- 2ª PÁGINA: VIA DO TÉCNICO -->
-        <div style="width: 210mm; min-height: 297mm; padding: 15mm; background: white; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid;">
+    function montarHTMLViaTecnico(os) {
+      return `
+        <div style="width: 210mm; min-height: 280mm; padding: 15mm; background: white; font-family: Arial, sans-serif; color: #1e293b; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <div style="font-size: 10px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 6px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
+            <div style="font-size: 11px; font-weight: bold; text-align: right; color: #dc2626; margin-bottom: 6px;">🔧 2ª VIA - USO INTERNO / TÉCNICO</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px;">
               <div>
-                <h1 style="font-size: 14px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
-                <p style="font-size: 10px; color: #64748b;">Ordem de Serviço: <strong>${os.id}</strong> | Entrada: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
+                <h1 style="font-size: 15px; font-weight: 900; color: #0f172a;">PLUG INFORMÁTICA - CONTROLE TÉCNICO</h1>
+                <p style="font-size: 11px; color: #64748b;">Ordem de Serviço: <strong>${os.id}</strong> | Entrada: ${new Date(os.dataEntrada).toLocaleString('pt-BR')}</p>
               </div>
               <div style="text-align: right;">
-                <h2 style="font-size: 15px; color: #dc2626; font-weight: 900;">${os.equipamento.tipo}</h2>
-                <p style="font-size: 10px; color: #64748b;">Atendente: ${os.atendente}</p>
+                <h2 style="font-size: 16px; color: #dc2626; font-weight: 900;">${os.equipamento.tipo}</h2>
+                <p style="font-size: 11px; color: #64748b;">Atendente: ${os.atendente}</p>
               </div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">💻 Equipamento & Identificação</div>
-              <p style="font-size: 11px;"><strong>Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo} | <strong>Série:</strong> ${os.equipamento.serie}</p>
-              <p style="font-size: 11px; margin-top: 4px;"><strong>Acessórios Deixados:</strong> ${os.equipamento.notas}</p>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">💻 Equipamento & Identificação</div>
+              <p style="font-size: 12px;"><strong>Modelo:</strong> ${os.equipamento.marca} ${os.equipamento.modelo} | <strong>Série:</strong> ${os.equipamento.serie}</p>
+              <p style="font-size: 12px; margin-top: 4px;"><strong>Acessórios Deixados:</strong> ${os.equipamento.notas}</p>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">⚠️ Defeito Apresentado</div>
-              <p style="font-size: 11px;">${os.reclamacao}</p>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">⚠️ Defeito Apresentado</div>
+              <p style="font-size: 12px;">${os.reclamacao}</p>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">🛠️ Procedimento para Solução</div>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">🛠️ Procedimento para Solução</div>
+              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
+              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📦 Peças Utilizadas & Serviços Executados</div>
+              <div style="border-bottom: 1px dotted #94a3b8; height: 40px; margin-top: 10px;"></div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px;">
+              <div style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📝 Observação</div>
               <div style="border-bottom: 1px dotted #94a3b8; height: 35px; margin-top: 8px;"></div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 35px; margin-top: 8px;"></div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📦 Peças Utilizadas & Serviços Executados</div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 35px; margin-top: 8px;"></div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px;">
-              <div style="font-size: 10px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">📝 Observação</div>
-              <div style="border-bottom: 1px dotted #94a3b8; height: 30px; margin-top: 5px;"></div>
             </div>
           </div>
 
-          <div style="font-size: 9px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+          <div style="font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
             <p>• Documento interno de acompanhamento de bancada e controle técnico.</p>
           </div>
         </div>
       `;
     }
 
-    // --- IMPRESSÃO EM 2 PÁGINAS EXATAS ---
-    window.imprimirComprovanteEntrada = function(os) {
-      let containerPdf = document.getElementById('comprovante-pdf-container');
-      containerPdf.innerHTML = montarHTMLComprovante(os);
+    // --- FUNÇÕES DE IMPRESSÃO ISOLADAS ---
+    window.imprimirViaCliente = function(os) {
+      let container = document.getElementById('comprovante-pdf-container');
+      container.innerHTML = montarHTMLViaCliente(os);
 
       let opt = {
-        margin:       0,
-        filename:     `Comprovante_${os.id}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 0,
+        filename: `Comprovante_Cliente_${os.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().from(containerPdf).set(opt).toPdf().get('pdf').then((pdf) => {
-        let blobPdf = pdf.output('blob');
-        let blobUrl = URL.createObjectURL(blobPdf);
-        let win = window.open(blobUrl, '_blank');
+      html2pdf().from(container).set(opt).toPdf().get('pdf').then((pdf) => {
+        let blob = pdf.output('blob');
+        let url = URL.createObjectURL(blob);
+        let win = window.open(url, '_blank');
         if (win) win.print();
       });
     };
 
-    // --- ENVIAR COMPROVANTE / ORÇAMENTO NO WHATSAPP COM GERENCIAMENTO DE PDF ---
+    window.imprimirViaTecnico = function(os) {
+      let container = document.getElementById('comprovante-pdf-container');
+      container.innerHTML = montarHTMLViaTecnico(os);
+
+      let opt = {
+        margin: 0,
+        filename: `Comprovante_Tecnico_${os.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().from(container).set(opt).toPdf().get('pdf').then((pdf) => {
+        let blob = pdf.output('blob');
+        let url = URL.createObjectURL(blob);
+        let win = window.open(url, '_blank');
+        if (win) win.print();
+      });
+    };
+
+    // --- ENVIAR COMPROVANTE VIA WHATSAPP COM PDF BAIXADO ---
     window.enviarWhatsAppEntrada = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
       let foneLimpo = os.cliente.telefone.replace(/\D/g, '');
       let msg = `Olá *${os.cliente.nome}*, seu equipamento (*${os.equipamento.tipo} ${os.equipamento.marca} ${os.equipamento.modelo}*) deu entrada na *PLUG Informática* sob a O.S. *${os.id}*.\n\nReclamação: ${os.reclamacao}\n\nAcompanhe conosco!`;
       
-      let containerPdf = document.getElementById('comprovante-pdf-container');
-      containerPdf.innerHTML = montarHTMLComprovante(os);
+      let container = document.getElementById('comprovante-pdf-container');
+      container.innerHTML = montarHTMLViaCliente(os);
       
       let opt = {
-        margin:       0,
-        filename:     `Comprovante_${os.id}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 0,
+        filename: `Comprovante_${os.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().from(containerPdf).set(opt).save();
+      html2pdf().from(container).set(opt).save();
 
       setTimeout(() => {
         window.open(`https://api.whatsapp.com/send?phone=55${foneLimpo}&text=${encodeURIComponent(msg)}`, '_blank');
@@ -1570,7 +1593,7 @@
         return;
       }
 
-    container.innerHTML = filtradas.map(os => {
+      container.innerHTML = filtradas.map(os => {
         let calc = calcularTaxasEValoresOS(os);
         return `
           <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px;">
@@ -1585,9 +1608,10 @@
             <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Avaliação</button>
-              <button onclick="imprimirComprovanteEntrada(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-dark">🖨️ Imprimir Entrada</button>
-              <button onclick="enviarWhatsAppEntrada('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 Baixar PDF & Zap</button>
-              <button onclick="imprimirOSCompleta('${os.idDoc}')" class="btn-sm btn-dark">📄 Imprimir Orçamento</button>
+              <button onclick="imprimirViaCliente(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-dark">🖨️ Via Cliente</button>
+              <button onclick="imprimirViaTecnico(${JSON.stringify(os).replace(/"/g, '&quot;')})" class="btn-sm btn-red">🔧 Via Técnico</button>
+              <button onclick="enviarWhatsAppEntrada('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 PDF & Zap</button>
+              <button onclick="imprimirOSCompleta('${os.idDoc}')" class="btn-sm btn-dark">📄 Orçamento</button>
               <button onclick="enviarWhatsAppOrcamento('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 Zap Orçamento</button>
               <button onclick="excluirOS('${os.idDoc}')" class="btn-sm btn-red">🗑️</button>
             </div>
