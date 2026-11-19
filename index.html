@@ -1479,7 +1479,7 @@
       }, 1000);
     };
 
-    // --- ORÇAMENTO COMPLETO (COM QR CODE REAL VIA API GOOGLE/QRCODE) ---
+    // --- ORÇAMENTO COMPLETO (COM NOVA IMAGEM DE QR CODE E LEITURA PRESERVADA) ---
     window.imprimirOSCompleta = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
       if (!os) return;
@@ -1498,12 +1498,6 @@
       `).join('') : `<tr><td colspan="2" style="padding: 6px; color: #64748b; text-align: center;">Nenhuma peça avulsa adicionada.</td></tr>`;
 
       let valorPixStr = (calc.valorBrutoInicial * 0.95).toFixed(2);
-      
-      // Payload do Pix pronto para gerar o QR Code correto
-      let dadosPix = `00020126580014br.gov.bcb.pix0136pluginformatica.net.br@gmail.com5204000053039865802BR5913PLUG INFORMATICA6009SAO PAULO62070503${os.id}6304`;
-      
-      // URL da API que gera a imagem real do QR Code contendo os dados do Pix
-      let urlQrCodeApi = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=` + encodeURIComponent(dadosPix);
 
       let win = window.open('', '_blank');
       let htmlConteudo = `
@@ -1529,8 +1523,8 @@
             .total-box h3 { color: #059669; font-size: 18px; font-weight: 900; }
             .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 10px; font-weight: 900; text-align: center; margin: 15px 0; border-radius: 8px; background: #fef2f2; }
             .footer-notes { font-size: 10px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 20px; font-weight: bold; }
-            .qr-container { text-align: center; background: white; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
-            .qr-img { width: 100px; height: 100px; display: block; }
+            .qr-container { text-align: center; background: #ffffff; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+            .qr-img { width: 100px; height: 100px; display: block; margin: 0 auto; object-fit: contain; image-rendering: pixelated; }
           </style>
         </head>
         <body>
@@ -1588,9 +1582,8 @@
               <p style="font-size: 10px; color: #047857; margin-top: 2px;">Valor Bruto: R$ ${calc.valorBrutoInicial.toFixed(2)} | Ou em <strong>2x de R$ ${calc.valorParcela2x.toFixed(2)} sem juros</strong></p>
             </div>
             <div class="qr-container">
-              <!-- Imagem real do QR Code gerada via API online garantindo leitura perfeita no celular -->
-              <img src="${urlQrCodeApi}" alt="QR Code Pix" class="qr-img">
-              <p style="font-size: 8px; font-weight: bold; color: #065f46; margin-top: 2px;">Pague com Pix</p>
+              <img src="qrcode-pix.jpg" alt="QR Code Pix" class="qr-img">
+              <p style="font-size: 8px; font-weight: bold; color: #065f46; margin-top: 4px;">Pague com Pix</p>
             </div>
           </div>
 
@@ -1744,4 +1737,3 @@
   </script>
 </body>
 </html>
-```[cite: 2]
