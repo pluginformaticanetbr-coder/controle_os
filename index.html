@@ -55,6 +55,7 @@
     .btn-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
     .btn-purple { background: #7c3aed; color: white; }
     .btn-whatsapp { background: #16a34a; color: white; }
+    .btn-amber { background: #d97706; color: white; }
 
     /* Modais */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
@@ -651,6 +652,14 @@
       "Baixa de Estoque"
     ];
 
+    const ROTULOS_PAGAMENTO = {
+      pix_dinheiro: "Pix / Dinheiro (5% de desconto)",
+      debito: "Cartão de Débito",
+      credito_avista: "Crédito à Vista",
+      credito_2x: "Crédito em 2x sem juros",
+      outros: "Outro"
+    };
+
     window.listaOS = [];
     window.listaColaboradores = [];
     window.tabelaServicos = [];
@@ -686,7 +695,6 @@
       document.getElementById('tela-login').style.display = 'none';
       document.getElementById('menu-navegacao').classList.remove('hidden');
 
-      // Esconde todas as abas e botões de navegação exceto o modo comissão individual
       const botoesIds = ['btn-aba-nova', 'btn-aba-lista', 'btn-aba-est', 'btn-aba-hist', 'btn-aba-colab', 'btn-aba-fin', 'btn-sair-sistema'];
       botoesIds.forEach(id => {
         const el = document.getElementById(id);
@@ -1664,6 +1672,148 @@
       }, 300);
     };
 
+    // --- RECIBO PROFISSIONAL PARA O CLIENTE ---
+    window.imprimirReciboCliente = function(idDoc) {
+      let os = window.listaOS.find(o => o.idDoc === idDoc);
+      if (!os) return;
+      let calc = calcularTaxasEValoresOS(os);
+
+      let dataEmissao = new Date();
+      let dataEmissaoFormatada = dataEmissao.toLocaleDateString('pt-BR');
+      let dataVencimentoGarantia = new Date(dataEmissao);
+      dataVencimentoGarantia.setDate(dataVencimentoGarantia.getDate() + 90);
+      let dataGarantiaFormatada = dataVencimentoGarantia.toLocaleDateString('pt-BR');
+
+      let numeroRecibo = "REC-" + String(os.id || idDoc).replace(/^OS-/i, "");
+      let formaPagLabel = ROTULOS_PAGAMENTO[os.formaPagamento] || "Pix / Dinheiro";
+
+      let itensRows = `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">
+            <strong>Serviço Técnico / Mão de Obra</strong><br>
+            <span style="font-size: 11px; color: #475569;">${os.solucao || os.diagnostico || os.reclamacao || 'Atendimento técnico'}</span>
+          </td>
+          <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold; vertical-align: top;">R$ ${(parseFloat(os.valorServico) || 0).toFixed(2)}</td>
+        </tr>
+      `;
+
+      if (os.pecas && os.pecas.length > 0) {
+        itensRows += os.pecas.map(p => `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Peça / Componente: <strong>${p.nome}</strong></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">R$ ${(parseFloat(p.venda) || 0).toFixed(2)}</td>
+          </tr>
+        `).join('');
+      }
+
+      let win = window.open('', '_blank');
+      let htmlConteudo = `
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Recibo ${numeroRecibo} - O.S. ${os.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; padding: 28px; max-width: 720px; margin: auto; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
+            .logo-img { height: 52px; max-width: 150px; object-fit: contain; }
+            .empresa-info h1 { font-size: 17px; font-weight: 900; color: #0f172a; }
+            .empresa-info p { font-size: 11px; color: #475569; margin-top: 2px; line-height: 1.4; }
+            .recibo-badge { text-align: right; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; }
+            .recibo-badge .titulo { font-size: 11px; font-weight: 900; color: #0284c7; text-transform: uppercase; }
+            .recibo-badge .num { font-size: 16px; font-weight: 900; color: #0f172a; margin-top: 2px; }
+            .recibo-badge .sub { font-size: 10px; color: #64748b; margin-top: 2px; }
+            .declaracao { background: #f8fafc; border-left: 4px solid #0284c7; padding: 12px 14px; border-radius: 6px; font-size: 12px; line-height: 1.5; margin-bottom: 16px; }
+            .box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+            .box-title { font-size: 11px; font-weight: 900; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            .resumo-valor { display: flex; justify-content: space-between; align-items: center; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 14px; border-radius: 8px; margin-top: 12px; }
+            .resumo-valor .label { font-size: 11px; font-weight: 900; color: #065f46; text-transform: uppercase; }
+            .resumo-valor .detalhe { font-size: 11px; color: #047857; margin-top: 3px; }
+            .resumo-valor .total { font-size: 22px; font-weight: 900; color: #059669; }
+            .carimbo { border: 2px dashed #ef4444; color: #b91c1c; padding: 8px; font-weight: 900; text-align: center; margin: 12px 0; border-radius: 8px; background: #fef2f2; font-size: 11px; }
+            .assinatura-box { margin-top: 38px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; text-align: center; font-size: 11px; color: #475569; }
+            .linha-ass { border-top: 1px solid #334155; padding-top: 6px; font-weight: bold; color: #0f172a; }
+            .rodape { margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 10px; color: #64748b; line-height: 1.4; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="robozinho.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none';">
+              <div class="empresa-info">
+                <h1>PLUG INFORMÁTICA</h1>
+                <p>Avenida Portugal, 20 - Centro, Mauá - SP<br>Tel: (11) 95820-8637 | pluginformatica.net.br@gmail.com</p>
+              </div>
+            </div>
+            <div class="recibo-badge">
+              <div class="titulo">Recibo de Pagamento</div>
+              <div class="num">${numeroRecibo}</div>
+              <div class="sub">Ref. O.S.: <strong>${os.id}</strong> • Emissão: ${dataEmissaoFormatada}</div>
+            </div>
+          </div>
+
+          <div class="declaracao">
+            Recebemos de <strong>${os.cliente.nome}</strong> (Telefone: <strong>${os.cliente.telefone}</strong>) a quantia de <strong>R$ ${calc.valorFinalCliente.toFixed(2)}</strong> referente aos serviços e/ou peças discriminados abaixo, com pagamento via <strong>${formaPagLabel}</strong>.
+          </div>
+
+          <div class="box">
+            <div class="box-title">💻 Equipamento e Atendimento</div>
+            <div class="grid-2">
+              <div><strong>Equipamento:</strong> ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo}</div>
+              <div><strong>Nº de Série / Tag:</strong> ${os.equipamento.serie || 'N/A'}</div>
+              <div><strong>Atendente:</strong> ${os.atendente || '-'}</div>
+              <div><strong>Técnico Responsável:</strong> ${os.tecnico || 'Não atribuído'}</div>
+            </div>
+          </div>
+
+          ${os.carimboCabeca ? '<div class="carimbo">🚨 OBSERVAÇÃO: LIMPEZA DE CABEÇA SEM GARANTIA</div>' : ''}
+
+          <div class="box">
+            <div class="box-title">🧾 Discriminação de Serviços e Peças</div>
+            <table>
+              ${itensRows}
+            </table>
+          </div>
+
+          <div class="resumo-valor">
+            <div>
+              <div class="label">Valor Total Recebido</div>
+              <div class="detalhe">Subtotal: R$ ${calc.valorBrutoInicial.toFixed(2)}${calc.descontoPix > 0 ? ` • Desconto Pix/Dinheiro (5%): -R$ ${calc.descontoPix.toFixed(2)}` : ''}</div>
+              <div class="detalhe">Garantia de serviço/peça até: <strong>${os.carimboCabeca ? 'Sem garantia (limpeza de cabeça)' : dataGarantiaFormatada}</strong></div>
+            </div>
+            <div class="total">R$ ${calc.valorFinalCliente.toFixed(2)}</div>
+          </div>
+
+          <div class="assinatura-box">
+            <div>
+              <div class="linha-ass">PLUG INFORMÁTICA</div>
+              <div>Assinatura / Carimbo do Emitente</div>
+            </div>
+            <div>
+              <div class="linha-ass">${os.cliente.nome}</div>
+              <div>Assinatura do Cliente</div>
+            </div>
+          </div>
+
+          <div class="rodape">
+            • Documento emitido para comprovação de pagamento referente à Ordem de Serviço <strong>${os.id}</strong>.<br>
+            • Em caso de dúvidas ou suporte técnico, entre em contato pelo telefone (11) 95820-8637 ou e-mail pluginformatica.net.br@gmail.com.
+          </div>
+        </body>
+        </html>
+      `;
+
+      win.document.open();
+      win.document.write(htmlConteudo);
+      win.document.close();
+
+      setTimeout(() => {
+        win.focus();
+        win.print();
+      }, 300);
+    };
+
     // --- IMPRESSÃO VIA TÉCNICO ---
     window.imprimirViaTecnico = function(idDoc) {
       let os = window.listaOS.find(o => o.idDoc === idDoc);
@@ -1947,6 +2097,7 @@
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Avaliação</button>
               <button onclick="imprimirViaCliente('${os.idDoc}')" class="btn-sm btn-dark">🖨️ Via Cliente</button>
+              <button onclick="imprimirReciboCliente('${os.idDoc}')" class="btn-sm btn-amber">🧾 Recibo</button>
               <button onclick="imprimirViaTecnico('${os.idDoc}')" class="btn-sm btn-red">🔧 Via Técnico</button>
               <button onclick="enviarWhatsAppEntrada('${os.idDoc}')" class="btn-sm btn-whatsapp">💬 PDF & Zap</button>
               <button onclick="imprimirOSCompleta('${os.idDoc}')" class="btn-sm btn-dark">📄 Orçamento</button>
