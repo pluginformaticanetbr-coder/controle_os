@@ -441,6 +441,11 @@
           <textarea id="diag-solucao" rows="2" placeholder="Ex: Reparo realizado..."></textarea>
         </div>
 
+        <div>
+          <label>📝 Observação da Avaliação</label>
+          <textarea id="diag-observacao" rows="2" placeholder="Ex: Cliente ciente do prazo de peças, aparelho testado em bancada..."></textarea>
+        </div>
+
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 10px;">
           <label style="color: #166534; font-size: 12px; font-weight: bold;">💳 Forma de Pagamento</label>
           <select id="diag-forma-pagamento" style="font-weight: bold; margin-top: 5px;">
@@ -1652,6 +1657,7 @@
         tecnico: "",
         diagnostico: "",
         solucao: "",
+        observacao: "",
         carimboCabeca: false,
         formaPagamento: "pix_dinheiro",
         pecas: [],
@@ -2168,6 +2174,9 @@
 
       container.innerHTML = filtradas.map(os => {
         let calc = calcularTaxasEValoresOS(os);
+        let obsHtml = os.observacao
+          ? `<p style="font-size: 11px; color: #0f172a; background: #f8fafc; border-left: 3px solid #0284c7; padding: 6px 10px; border-radius: 4px; margin-bottom: 12px;"><strong>📝 Observação:</strong> ${os.observacao}</p>`
+          : '';
         return `
           <div style="background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
@@ -2178,7 +2187,8 @@
               </div>
               <strong style="color: #059669; font-size: 15px;">R$ ${calc.valorFinalCliente.toFixed(2)}</strong>
             </div>
-            <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
+            <p style="font-size: 11px; color: #64748b; margin-bottom: 8px;">Equipamento: ${os.equipamento.tipo} - ${os.equipamento.marca} ${os.equipamento.modelo} | Defeito: ${os.reclamacao}</p>
+            ${obsHtml}
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="abrirModalDiagnostico('${os.idDoc}')" class="btn-sm btn-sky">✏️ Avaliação</button>
               <button onclick="imprimirViaCliente('${os.idDoc}')" class="btn-sm btn-dark">🖨️ Via Cliente</button>
@@ -2202,6 +2212,7 @@
       document.getElementById('diag-tecnico-nome').value = os.tecnico || '';
       document.getElementById('diag-tecnico').value = os.diagnostico || '';
       document.getElementById('diag-solucao').value = os.solucao || '';
+      document.getElementById('diag-observacao').value = os.observacao || '';
       document.getElementById('diag-vservico').value = os.valorServico || 0;
       document.getElementById('diag-carimbo-cabeca').checked = os.carimboCabeca || false;
       document.getElementById('diag-forma-pagamento').value = os.formaPagamento || 'pix_dinheiro';
@@ -2244,6 +2255,7 @@
         tecnico: document.getElementById('diag-tecnico-nome').value,
         diagnostico: document.getElementById('diag-tecnico').value.trim(),
         solucao: document.getElementById('diag-solucao').value.trim(),
+        observacao: document.getElementById('diag-observacao').value.trim(),
         carimboCabeca: document.getElementById('diag-carimbo-cabeca').checked,
         formaPagamento: document.getElementById('diag-forma-pagamento').value,
         pecas: pecas,
